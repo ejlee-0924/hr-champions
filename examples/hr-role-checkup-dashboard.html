@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR 역할 진단 — 김서연 팀장</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Pretendard', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  .header { padding: 24px 32px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header h1 span { color: #60a5fa; }
+  .header .meta { font-size: 13px; color: #94a3b8; }
+
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #1e293b; padding: 0 32px; }
+  .tab { padding: 12px 20px; font-size: 14px; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: #e2e8f0; }
+  .tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+  .panel { display: none; padding: 32px; }
+  .panel.active { display: block; }
+
+  /* Score Cards */
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .card { background: #1e293b; border-radius: 12px; padding: 20px; position: relative; overflow: hidden; transition: transform 0.2s; cursor: pointer; }
+  .card:hover { transform: translateY(-2px); }
+  .card .role-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .card .role-name { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+  .card .score-big { font-size: 42px; font-weight: 700; line-height: 1; }
+  .card .score-max { font-size: 16px; color: #64748b; font-weight: 400; }
+  .card .bar { height: 4px; background: #334155; border-radius: 2px; margin-top: 16px; }
+  .card .bar-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+  .card .card-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; margin-top: 10px; }
+  .card .tooltip { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.96); padding: 16px; font-size: 13px; line-height: 1.6; color: #cbd5e1; border-radius: 12px; overflow-y: auto; }
+  .card:hover .tooltip { display: block; }
+
+  .tag-strength { background: rgba(52,211,153,0.15); color: #34d399; }
+  .tag-develop { background: rgba(248,113,113,0.15); color: #f87171; }
+  .tag-mid { background: rgba(251,191,36,0.15); color: #fbbf24; }
+
+  .c-high { color: #34d399; }
+  .c-mid { color: #fbbf24; }
+  .c-low { color: #f87171; }
+  .b-high { background: #34d399; }
+  .b-mid { background: #fbbf24; }
+  .b-low { background: #f87171; }
+
+  .total-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 32px; }
+  .total-score { font-size: 56px; font-weight: 700; color: #fbbf24; }
+  .total-label { font-size: 14px; color: #94a3b8; margin-top: 4px; }
+  .total-bar { max-width: 300px; margin: 12px auto 0; height: 6px; background: #334155; border-radius: 3px; }
+  .total-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #f87171, #fbbf24, #34d399); }
+
+  /* Radar */
+  .radar-section { display: flex; gap: 40px; align-items: flex-start; margin-bottom: 32px; }
+  .radar-container { flex: 0 0 320px; display: flex; justify-content: center; }
+  .radar-info { flex: 1; }
+  .radar-info h3 { font-size: 16px; margin-bottom: 16px; color: #60a5fa; }
+
+  /* Balance */
+  .balance-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .balance-box { background: #1e293b; border-radius: 12px; padding: 20px; }
+  .balance-box h4 { font-size: 13px; color: #94a3b8; margin-bottom: 12px; }
+  .balance-bar-container { display: flex; align-items: center; gap: 8px; }
+  .balance-label { font-size: 12px; width: 80px; text-align: right; color: #94a3b8; }
+  .balance-label-r { font-size: 12px; width: 80px; text-align: left; color: #94a3b8; }
+  .balance-track { flex: 1; height: 8px; background: #334155; border-radius: 4px; position: relative; }
+  .balance-marker { position: absolute; top: -4px; width: 16px; height: 16px; background: #60a5fa; border-radius: 50%; border: 2px solid #0f172a; transform: translateX(-50%); transition: left 1s ease; }
+  .balance-center { position: absolute; left: 50%; top: -2px; width: 1px; height: 12px; background: #475569; }
+
+  /* Paradox */
+  .paradox-section { margin-top: 32px; }
+  .paradox-card { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 20px; }
+  .paradox-vs { font-size: 24px; font-weight: 700; color: #475569; flex-shrink: 0; }
+  .paradox-bar-wrap { flex: 1; }
+  .paradox-names { display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+  .paradox-track { height: 8px; background: #334155; border-radius: 4px; position: relative; display: flex; }
+  .paradox-fill-l { height: 100%; border-radius: 4px 0 0 4px; }
+  .paradox-fill-r { height: 100%; border-radius: 0 4px 4px 0; margin-left: auto; }
+
+  /* Development */
+  .dev-section { margin-top: 32px; }
+  .dev-card { background: #1e293b; border-radius: 12px; padding: 24px; border-left: 4px solid; margin-bottom: 16px; }
+  .dev-card.strength { border-color: #34d399; }
+  .dev-card.weakness { border-color: #f87171; }
+  .dev-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .dev-desc { font-size: 13px; color: #94a3b8; line-height: 1.6; }
+  .dev-action { margin-top: 12px; padding: 10px 14px; background: rgba(96,165,250,0.1); border-radius: 8px; font-size: 13px; color: #60a5fa; }
+
+  /* Next Steps */
+  .next-section { margin-top: 32px; background: linear-gradient(135deg, rgba(96,165,250,0.08), rgba(96,165,250,0.02)); border: 1px solid rgba(96,165,250,0.2); border-radius: 12px; padding: 24px; }
+  .next-section h3 { color: #60a5fa; margin-bottom: 16px; }
+  .next-tools { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .next-tool { background: #1e293b; border-radius: 8px; padding: 14px; cursor: pointer; transition: all 0.2s; }
+  .next-tool:hover { background: #334155; }
+  .next-tool .tool-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .next-tool .tool-desc { font-size: 12px; color: #94a3b8; }
+  .next-tool.recommended { border: 1px solid #f87171; }
+  .next-tool.recommended .tool-name::after { content: " ← 추천"; font-size: 11px; color: #f87171; font-weight: 400; }
+
+  .footer { padding: 24px 32px; border-top: 1px solid #1e293b; font-size: 12px; color: #475569; display: flex; justify-content: space-between; }
+
+  @media (max-width: 768px) {
+    .cards { grid-template-columns: repeat(2, 1fr); }
+    .radar-section { flex-direction: column; }
+    .balance-section { grid-template-columns: 1fr; }
+    .next-tools { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>HR 역할 진단 — <span>김서연 팀장</span></h1>
+  <div class="meta">A사 HR팀 &nbsp;|&nbsp; 40문항 Role-Assessment &nbsp;|&nbsp; 2026-03-31</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPanel('scores')">점수 프로파일</div>
+  <div class="tab" onclick="showPanel('balance')">균형 분석</div>
+  <div class="tab" onclick="showPanel('develop')">개발 방향</div>
+</div>
+
+<!-- Panel 1: 점수 프로파일 -->
+<div id="scores" class="panel active">
+  <div class="total-card">
+    <div class="total-score">125 <span style="font-size:24px;color:#64748b;">/ 200</span></div>
+    <div class="total-label">총점 — 보통 수준 (160+ 우수, 90 미만 위험)</div>
+    <div class="total-bar"><div class="total-fill" style="width:62.5%"></div></div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="role-label">전략 x 프로세스</div>
+      <div class="role-name">Strategic Partner</div>
+      <div class="score-big c-mid">32 <span class="score-max">/ 50</span></div>
+      <div class="bar"><div class="bar-fill b-mid" style="width:64%"></div></div>
+      <div class="card-tag tag-mid">보통</div>
+      <div class="tooltip">
+        <strong>Strategic Partner (32/50)</strong><br><br>
+        비즈니스 전략과 HR을 연결하는 역할. 조직 진단, HR-전략 정렬이 핵심 활동.<br><br>
+        <strong>현재 수준:</strong> 전략 방향은 이해하지만, 경영진과 동등한 전략 대화에는 아직 거리감. HR 이니셔티브를 비즈니스 언어로 번역하는 데 연습 필요.
+      </div>
+    </div>
+    <div class="card">
+      <div class="role-label">운영 x 프로세스</div>
+      <div class="role-name">Admin Expert</div>
+      <div class="score-big c-low">24 <span class="score-max">/ 50</span></div>
+      <div class="bar"><div class="bar-fill b-low" style="width:48%"></div></div>
+      <div class="card-tag tag-develop">개발 필요</div>
+      <div class="tooltip">
+        <strong>Administrative Expert (24/50)</strong><br><br>
+        HR 프로세스의 효율화·표준화·자동화 담당. Shared Services 구축이 핵심.<br><br>
+        <strong>현재 수준:</strong> "직접 해주는" 방식에 익숙. 채용·온보딩 등 프로세스가 수작업 중심. 시스템화·자동화 투자가 부족하여 팀 전체가 운영 업무에 묶여 있음.
+      </div>
+    </div>
+    <div class="card">
+      <div class="role-label">운영 x 사람</div>
+      <div class="role-name">Employee Champion</div>
+      <div class="score-big c-high">41 <span class="score-max">/ 50</span></div>
+      <div class="bar"><div class="bar-fill b-high" style="width:82%"></div></div>
+      <div class="card-tag tag-strength">강점</div>
+      <div class="tooltip">
+        <strong>Employee Champion (41/50)</strong><br><br>
+        직원의 목소리를 듣고, 역량과 몰입을 높이는 역할. 경청과 자원 제공이 핵심.<br><br>
+        <strong>현재 수준:</strong> 직원 인터뷰, 면담, 설문을 통해 니즈를 잘 파악. 직원 편에서 생각하는 성향이 뚜렷. 다만 "듣는 것"에 그치지 않고 시스템으로 해결하는 연결이 필요.
+      </div>
+    </div>
+    <div class="card">
+      <div class="role-label">전략 x 사람</div>
+      <div class="role-name">Change Agent</div>
+      <div class="score-big c-low">28 <span class="score-max">/ 50</span></div>
+      <div class="bar"><div class="bar-fill b-low" style="width:56%"></div></div>
+      <div class="card-tag tag-develop">개발 필요</div>
+      <div class="tooltip">
+        <strong>Change Agent (28/50)</strong><br><br>
+        조직 변혁과 문화 변화를 설계·촉진하는 역할. 저항 관리, 이해관계자 동원이 핵심.<br><br>
+        <strong>현재 수준:</strong> CEO의 AI-First 전환에 대응해야 하지만, 변화관리 프레임워크나 다중 이해관계자 관리 경험이 부족. 직원 공감은 강하지만 변화를 "설계"하는 역량은 약함.
+      </div>
+    </div>
+  </div>
+
+  <div class="radar-section">
+    <div class="radar-container">
+      <svg width="320" height="320" viewBox="0 0 320 320">
+        <g transform="translate(160,160)">
+          <!-- Grid -->
+          <polygon points="0,-130 130,0 0,130 -130,0" fill="none" stroke="#334155" stroke-width="0.5"/>
+          <polygon points="0,-97.5 97.5,0 0,97.5 -97.5,0" fill="none" stroke="#334155" stroke-width="0.5"/>
+          <polygon points="0,-65 65,0 0,65 -65,0" fill="none" stroke="#334155" stroke-width="0.5"/>
+          <polygon points="0,-32.5 32.5,0 0,32.5 -32.5,0" fill="none" stroke="#334155" stroke-width="0.5"/>
+          <!-- Axes -->
+          <line x1="0" y1="-130" x2="0" y2="130" stroke="#334155" stroke-width="0.5"/>
+          <line x1="-130" y1="0" x2="130" y2="0" stroke="#334155" stroke-width="0.5"/>
+          <!-- Data: SP=32(64%), AE=24(48%), EC=41(82%), CA=28(56%) mapped to 130 -->
+          <polygon points="0,-83.2 62.4,0 0,106.6 -72.8,0"
+            fill="rgba(96,165,250,0.12)" stroke="#60a5fa" stroke-width="2"/>
+          <circle cx="0" cy="-83.2" r="5" fill="#fbbf24"/>
+          <circle cx="62.4" cy="0" r="5" fill="#f87171"/>
+          <circle cx="0" cy="106.6" r="5" fill="#34d399"/>
+          <circle cx="-72.8" cy="0" r="5" fill="#f87171"/>
+          <!-- Labels -->
+          <text x="0" y="-140" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="600">Strategic Partner</text>
+          <text x="0" y="-124" text-anchor="middle" fill="#fbbf24" font-size="11">32</text>
+          <text x="145" y="4" text-anchor="start" fill="#94a3b8" font-size="12" font-weight="600">Admin Expert</text>
+          <text x="145" y="18" text-anchor="start" fill="#f87171" font-size="11">24</text>
+          <text x="0" y="128" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="600">Employee Champion</text>
+          <text x="0" y="142" text-anchor="middle" fill="#34d399" font-size="11">41</text>
+          <text x="-145" y="4" text-anchor="end" fill="#94a3b8" font-size="12" font-weight="600">Change Agent</text>
+          <text x="-145" y="18" text-anchor="end" fill="#f87171" font-size="11">28</text>
+          <!-- Axis labels -->
+          <text x="0" y="-155" text-anchor="middle" fill="#475569" font-size="10">전략</text>
+          <text x="0" y="160" text-anchor="middle" fill="#475569" font-size="10">운영</text>
+          <text x="155" y="-8" text-anchor="start" fill="#475569" font-size="10">프로세스</text>
+          <text x="-155" y="-8" text-anchor="end" fill="#475569" font-size="10">사람</text>
+        </g>
+      </svg>
+    </div>
+    <div class="radar-info">
+      <h3>프로파일 요약</h3>
+      <div style="background:#1e293b;border-radius:12px;padding:20px;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px;">한 줄 진단</div>
+        <div style="font-size:15px;line-height:1.6;color:#fbbf24;">"사람 중심의 HR, 시스템과 전략이 뒷받침되면 훨씬 강해집니다"</div>
+      </div>
+      <div style="background:#1e293b;border-radius:12px;padding:20px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px;">편향 패턴</div>
+        <div style="font-size:13px;color:#94a3b8;line-height:1.8;">
+          → 사람 축(EC 41 + CA 28 = 69) > 프로세스 축(SP 32 + AE 24 = 56)<br>
+          → 운영 축(EC 41 + AE 24 = 65) > 전략 축(SP 32 + CA 28 = 60)<br>
+          → <span style="color:#e2e8f0;">Employee Champion에 크게 기울어진 프로파일</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 2: 균형 분석 -->
+<div id="balance" class="panel">
+  <div class="balance-section">
+    <div class="balance-box">
+      <h4>전략 — 운영 축</h4>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-bottom:4px;">
+        <span>전략 (SP 32 + CA 28 = 60)</span>
+        <span>운영 (AE 24 + EC 41 = 65)</span>
+      </div>
+      <div class="balance-bar-container">
+        <div class="balance-label">전략</div>
+        <div class="balance-track">
+          <div class="balance-center"></div>
+          <div class="balance-marker" style="left:52%"></div>
+        </div>
+        <div class="balance-label-r">운영</div>
+      </div>
+      <div style="font-size:12px;color:#fbbf24;margin-top:8px;text-align:center;">약간 운영 편향 — 일상 운영에 시간을 더 씀</div>
+    </div>
+    <div class="balance-box">
+      <h4>프로세스 — 사람 축</h4>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-bottom:4px;">
+        <span>프로세스 (SP 32 + AE 24 = 56)</span>
+        <span>사람 (EC 41 + CA 28 = 69)</span>
+      </div>
+      <div class="balance-bar-container">
+        <div class="balance-label">프로세스</div>
+        <div class="balance-track">
+          <div class="balance-center"></div>
+          <div class="balance-marker" style="left:55%"></div>
+        </div>
+        <div class="balance-label-r">사람</div>
+      </div>
+      <div style="font-size:12px;color:#fbbf24;margin-top:8px;text-align:center;">사람 편향 — 시스템보다 관계에 의존하는 경향</div>
+    </div>
+  </div>
+
+  <div class="paradox-section">
+    <h3 style="font-size:16px;margin-bottom:16px;color:#60a5fa;">4역할 간 역설 (Paradox)</h3>
+
+    <div class="paradox-card">
+      <div class="paradox-vs">vs</div>
+      <div class="paradox-bar-wrap">
+        <div class="paradox-names">
+          <span>Strategic Partner (32)</span>
+          <span>Employee Champion (41)</span>
+        </div>
+        <div style="height:24px;background:#334155;border-radius:12px;display:flex;overflow:hidden;">
+          <div style="width:44%;background:linear-gradient(90deg,#fbbf24,#fbbf24);border-radius:12px 0 0 12px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#0f172a;">32</div>
+          <div style="width:56%;background:linear-gradient(90deg,#34d399,#34d399);border-radius:0 12px 12px 0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#0f172a;">41</div>
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:6px;">경영 파트너 ↔ 직원 대변인: Employee Champion이 우세. 경영진 앞에서 "직원 편"에 치우칠 위험.</div>
+      </div>
+    </div>
+
+    <div class="paradox-card">
+      <div class="paradox-vs">vs</div>
+      <div class="paradox-bar-wrap">
+        <div class="paradox-names">
+          <span>Change Agent (28)</span>
+          <span>Admin Expert (24)</span>
+        </div>
+        <div style="height:24px;background:#334155;border-radius:12px;display:flex;overflow:hidden;">
+          <div style="width:54%;background:linear-gradient(90deg,#f87171,#f87171);border-radius:12px 0 0 12px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#0f172a;">28</div>
+          <div style="width:46%;background:linear-gradient(90deg,#f87171,#f87171);border-radius:0 12px 12px 0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#0f172a;">24</div>
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:6px;">혁신 주도 ↔ 안정 인프라: 둘 다 약함. 변화를 추진할 동력도, 뒷받침할 시스템도 부족한 상태.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 3: 개발 방향 -->
+<div id="develop" class="panel">
+  <div class="dev-section">
+    <div class="dev-card strength">
+      <div class="dev-title" style="color:#34d399;">강점: Employee Champion (41/50)</div>
+      <div class="dev-desc">
+        직원 인터뷰, 면담, 설문을 통해 니즈를 잘 파악합니다. 직원 편에서 생각하는 성향이 뚜렷하고, 신뢰를 바탕으로 솔직한 피드백을 이끌어내는 능력이 있습니다.
+      </div>
+      <div class="dev-action">
+        이 강점을 유지하면서 — "듣는 것"에 그치지 않고 데이터로 경영진을 설득하는 연결고리를 만들면 Strategic Partner와의 시너지가 생깁니다.
+      </div>
+    </div>
+
+    <div class="dev-card weakness">
+      <div class="dev-title" style="color:#f87171;">1순위 개발: Administrative Expert (24/50)</div>
+      <div class="dev-desc">
+        HR 프로세스가 수작업 중심입니다. 채용 15일, 온보딩 서류 10종 수작업 — 팀이 운영 업무에 묶여 전략적 일을 할 여유가 없습니다. "직접 해주는" 방식에서 "시스템이 해주는" 방식으로 전환이 필요합니다.
+      </div>
+      <div class="dev-action">
+        → <strong>process-reengineering</strong> 도구로 가장 비효율적인 HR 프로세스부터 분석해보세요.
+      </div>
+    </div>
+
+    <div class="dev-card weakness">
+      <div class="dev-title" style="color:#f87171;">2순위 개발: Change Agent (28/50)</div>
+      <div class="dev-desc">
+        CEO의 AI-First 전환이 진행 중인데, 변화관리 프레임워크나 다중 이해관계자 관리 경험이 부족합니다. 직원 공감(Employee Champion)은 강하지만 변화를 "설계"하는 역량이 약합니다.
+      </div>
+      <div class="dev-action">
+        → <strong>change-readiness</strong> 도구로 AI 도입 프로젝트의 변화 준비도를 진단해보세요.
+      </div>
+    </div>
+  </div>
+
+  <div class="next-section">
+    <h3>다음 단계: 추천 도구</h3>
+    <div class="next-tools">
+      <div class="next-tool recommended">
+        <div class="tool-name">process-reengineering</div>
+        <div class="tool-desc">가장 약한 Admin Expert 역할 강화. 채용 프로세스를 리엔지니어링 6단계로 분석하고 자동화 영역을 찾습니다.</div>
+      </div>
+      <div class="next-tool">
+        <div class="tool-name">change-readiness</div>
+        <div class="tool-desc">AI-First 전환 프로젝트의 변화 성공 7요인을 다중 관점에서 진단합니다.</div>
+      </div>
+      <div class="next-tool">
+        <div class="tool-name">org-diagnosis</div>
+        <div class="tool-desc">조직 전체의 전략 실행력을 6요소로 진단. Strategic Partner 역량 강화에 도움.</div>
+      </div>
+      <div class="next-tool">
+        <div class="tool-name">employee-pulse</div>
+        <div class="tool-desc">강점인 Employee Champion을 더 체계적으로. 10C 프레임워크로 직원 자원을 정량 진단.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>Framework: Dave Ulrich, <em>Human Resource Champions</em> (1997), Ch2 40-Item Role Assessment</span>
+  <span>Powered by HR Champions x Claude Code</span>
+</div>
+
+<script>
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>직원 자원 진단 (10C) — A사</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Pretendard', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  .header { padding: 24px 32px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header h1 span { color: #60a5fa; }
+  .header .meta { font-size: 13px; color: #94a3b8; }
+
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #1e293b; padding: 0 32px; }
+  .tab { padding: 12px 20px; font-size: 14px; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: #e2e8f0; }
+  .tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+  .panel { display: none; padding: 32px; }
+  .panel.active { display: block; }
+
+  /* Bar Chart */
+  .bar-chart { margin-bottom: 32px; }
+  .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; cursor: pointer; }
+  .bar-row:hover .bar-track { background: #334155; }
+  .bar-label { width: 160px; font-size: 13px; text-align: right; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 28px; background: #1e293b; border-radius: 6px; position: relative; overflow: hidden; transition: background 0.2s; }
+  .bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px; font-size: 12px; font-weight: 600; transition: width 1s ease; }
+  .bar-avg { position: absolute; top: 0; bottom: 0; width: 2px; background: #fbbf24; opacity: 0.6; }
+  .bar-score { width: 50px; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+  .bar-status { width: 30px; font-size: 14px; flex-shrink: 0; }
+  .bar-tooltip { display: none; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #94a3b8; margin: -4px 0 8px 172px; line-height: 1.6; }
+  .bar-row:hover + .bar-tooltip { display: block; }
+
+  .avg-legend { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #94a3b8; margin-bottom: 20px; margin-left: 172px; }
+  .avg-line { width: 20px; height: 2px; background: #fbbf24; }
+
+  .bf-low { background: linear-gradient(90deg, #991b1b, #dc2626); color: #fca5a5; }
+  .bf-mid { background: linear-gradient(90deg, #78350f, #d97706); color: #fcd34d; }
+  .bf-ok { background: linear-gradient(90deg, #1e3a5f, #3b82f6); color: #93c5fd; }
+
+  /* Cluster Bubbles */
+  .clusters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+  .cluster { background: #1e293b; border-radius: 12px; padding: 20px; border-top: 3px solid; }
+  .cluster-score { font-size: 36px; font-weight: 700; }
+  .cluster-name { font-size: 14px; font-weight: 600; margin: 8px 0 4px; }
+  .cluster-items { font-size: 12px; color: #94a3b8; }
+  .cluster-impact { font-size: 12px; margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px; line-height: 1.5; }
+
+  /* Demands vs Resources */
+  .dr-section { margin-bottom: 32px; }
+  .dr-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .dr-cell { border-radius: 8px; padding: 12px 8px; text-align: center; font-size: 11px; line-height: 1.4; min-height: 80px; display: flex; flex-direction: column; justify-content: center; transition: transform 0.2s; cursor: pointer; }
+  .dr-cell:hover { transform: scale(1.05); }
+  .dr-danger { background: linear-gradient(135deg, #7f1d1d, #991b1b); }
+  .dr-warn { background: linear-gradient(135deg, #78350f, #92400e); }
+  .dr-ok { background: linear-gradient(135deg, #1e293b, #334155); }
+  .dr-cell .dr-score { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+
+  /* Participation Level */
+  .part-section { background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 32px; }
+  .part-steps { display: flex; gap: 4px; margin: 16px 0; }
+  .part-step { flex: 1; padding: 12px 8px; border-radius: 8px; text-align: center; font-size: 12px; line-height: 1.4; }
+  .part-done { background: rgba(96,165,250,0.15); border: 1px solid rgba(96,165,250,0.3); }
+  .part-current { background: rgba(96,165,250,0.3); border: 2px solid #60a5fa; }
+  .part-future { background: #0f172a; border: 1px solid #334155; color: #64748b; }
+  .part-target { background: rgba(52,211,153,0.1); border: 2px dashed #34d399; }
+
+  /* Word Cloud (simple) */
+  .wordcloud { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .word { padding: 6px 12px; border-radius: 20px; font-size: 13px; }
+  .word-neg { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+  .word-neu { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
+
+  /* Action Cards */
+  .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .action { background: #1e293b; border-radius: 12px; padding: 20px; border-left: 4px solid; }
+  .action.a1 { border-color: #f87171; }
+  .action.a2 { border-color: #fbbf24; }
+  .action.a3 { border-color: #60a5fa; }
+  .action-pri { font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+  .action-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .action-target { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+  .action-effect { font-size: 12px; padding: 8px; background: rgba(52,211,153,0.05); border-radius: 6px; color: #34d399; }
+
+  .footer { padding: 24px 32px; border-top: 1px solid #1e293b; font-size: 12px; color: #475569; display: flex; justify-content: space-between; }
+
+  @media (max-width: 768px) {
+    .clusters { grid-template-columns: 1fr; }
+    .dr-grid { grid-template-columns: repeat(2, 1fr); }
+    .actions { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>직원 자원 진단 (10C) — <span>A사</span></h1>
+  <div class="meta">Ulrich 10C (Ch5) &nbsp;|&nbsp; 2026-03-31 &nbsp;|&nbsp; 설문 N=650 + 인터뷰 3건</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPanel('profile')">10C 프로파일</div>
+  <div class="tab" onclick="showPanel('demands')">Demands vs Resources</div>
+  <div class="tab" onclick="showPanel('actions')">개선 액션</div>
+</div>
+
+<!-- Panel 1: 10C 프로파일 -->
+<div id="profile" class="panel active">
+
+  <div class="avg-legend"><div class="avg-line"></div> 전체 평균 (3.55)</div>
+
+  <div class="bar-chart">
+    <div class="bar-row">
+      <div class="bar-label">Challenging Work</div>
+      <div class="bar-track"><div class="bar-fill bf-low" style="width:20%;">2.0</div><div class="bar-avg" style="left:35.5%"></div></div>
+      <div class="bar-score" style="color:#f87171;">2.0</div>
+      <div class="bar-status">🔴</div>
+    </div>
+    <div class="bar-tooltip">"새 기술 배울 기회가 없어요. 매일 같은 일만 반복" — 박주임(R&D). 설문 성장 기회 2.8/5.</div>
+
+    <div class="bar-row">
+      <div class="bar-label">Communication</div>
+      <div class="bar-track"><div class="bar-fill bf-low" style="width:20%;">2.0</div><div class="bar-avg" style="left:35.5%"></div></div>
+      <div class="bar-score" style="color:#f87171;">2.0</div>
+      <div class="bar-status">🔴</div>
+    </div>
+    <div class="bar-tooltip">"경영진 메시지가 부서마다 다르게 전달돼요" — 이과장(경영지원). 설문 소통 2.5/5.</div>
+
+    <div class="bar-row">
+      <div class="bar-label">Control</div>
+      <div class="bar-track"><div class="bar-fill bf-low" style="width:25%;">2.5</div><div class="bar-avg" style="left:35.5%"></div></div>
+      <div class="bar-score" style="color:#f87171;">2.5</div>
+      <div class="bar-status">🔴</div>
+    </div>
+    <div class="bar-tooltip">"야근이 많은데 결정권이 없어요. 위에서 시키는 대로만" — 김대리(영업). 설문 자율성 2.7/5.</div>
+
+    <div class="bar-row">
+      <div class="bar-label">Collaboration</div>
+      <div class="bar-track"><div class="bar-fill bf-mid" style="width:30%;">3.0</div><div class="bar-avg" style="left:35.5%"></div></div>
+      <div class="bar-score" style="color:#fbbf24;">3.0</div>
+      <div class="bar-status">🟡</div>
+    </div>
+    <div class="bar-tooltip">"팀 간 협업이 안 돼요. 각자 사일로에서 일하는 느낌" — 이과장. 설문 협업 2.9/5.</div>
+
+    <div class="bar-row">
+      <div class="bar-label">Compensation</div>
+      <div class="bar-track"><div class="bar-fill bf-mid" style="width:35%;">3.5</div><div class="bar-avg" style="left:35.5%"></div></div>
+      <div class="bar-score" style="color:#fbbf24;">3.5</div>
+      <div class="bar-status">🟡</div>
+    </div>
+    <div class="bar-tooltip">"성과를 내도 영업만 바쁘고 인센티브는 본부별 균등 배분" — 김대리. 설문 보상 3.0/5.</div>
+
+    <div class="bar-row">
+      <div class="bar-label">Commitment</div>
+      <div class="bar-track"><div class="bar-fill bf-mid" style="width:40%;">4.0</div><div class="bar-avg" style="left:35.5%"></div></div>
+      <div class="bar-score" style="color:#fbbf24;">4.0</div>
+      <div class="bar-status">🟡</div>
+    </div>
+    <div class="bar-tooltip">"회사가 어디로 가는지도 잘 모르겠고" — 이과장. 설문 전체 만족도 3.2/5.</div>
+
+    <div class="bar-row">
+      <div class="bar-label">Culture</div>
+      <div class="bar-track"><div class="bar-fill bf-mid" style="width:40%;">4.0</div><div class="bar-avg" style="left:35.5%"></div></div>
+      <div class="bar-score" style="color:#fbbf24;">4.0</div>
+      <div class="bar-status">🟡</div>
+    </div>
+    <div class="bar-tooltip">명시적 문화 언급 없음. 설문 전체 만족도 3.2/5. 적극적 불만은 아니나 활력 부족.</div>
+
+    <div class="bar-row">
+      <div class="bar-label">Computers/Technology</div>
+      <div class="bar-track"><div class="bar-fill bf-ok" style="width:45%;">4.5</div><div class="bar-avg" style="left:35.5%"></div></div>
+      <div class="bar-score" style="color:#60a5fa;">4.5</div>
+      <div class="bar-status">—</div>
+    </div>
+    <div class="bar-tooltip">AI 도입 파일럿 진행 중. 기술 접근은 있으나 활용 저조. IT팀만 적극 활용.</div>
+
+    <div class="bar-row">
+      <div class="bar-label">Concern for Due Process</div>
+      <div class="bar-track"><div class="bar-fill bf-ok" style="width:50%;">5.0</div><div class="bar-avg" style="left:35.5%"></div></div>
+      <div class="bar-score" style="color:#60a5fa;">5.0</div>
+      <div class="bar-status">—</div>
+    </div>
+    <div class="bar-tooltip">명시적 불공정 언급 없음. 다만 Control 부재가 간접적 공정성 이슈로 이어질 수 있음.</div>
+
+    <div class="bar-row">
+      <div class="bar-label">Competence</div>
+      <div class="bar-track"><div class="bar-fill bf-ok" style="width:50%;">5.0</div><div class="bar-avg" style="left:35.5%"></div></div>
+      <div class="bar-score" style="color:#60a5fa;">5.0</div>
+      <div class="bar-status">—</div>
+    </div>
+    <div class="bar-tooltip">기존 제조 역량은 업계 수준. 전기차·AI 신규 역량 부족. R&D 핵심 인재 이탈로 갭 확대.</div>
+  </div>
+
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:16px;">클러스터 분석</h3>
+  <div class="clusters">
+    <div class="cluster" style="border-color:#f87171;">
+      <div class="cluster-score" style="color:#f87171;">2.25</div>
+      <div class="cluster-name">자율성 클러스터</div>
+      <div class="cluster-items">Control (2.5) + Challenging Work (2.0)</div>
+      <div class="cluster-impact">"내가 결정할 수 없고, 성장할 수도 없다" → 핵심 인재 이탈 직결</div>
+    </div>
+    <div class="cluster" style="border-color:#fbbf24;">
+      <div class="cluster-score" style="color:#fbbf24;">3.0</div>
+      <div class="cluster-name">소통 클러스터</div>
+      <div class="cluster-items">Communication (2.0) + Commitment (4.0) + Collaboration (3.0)</div>
+      <div class="cluster-impact">"어디로 가는지 모르고, 함께 일하지도 않는다" → 사일로의 근본 원인</div>
+    </div>
+    <div class="cluster" style="border-color:#60a5fa;">
+      <div class="cluster-score" style="color:#60a5fa;">4.25</div>
+      <div class="cluster-name">보상 클러스터</div>
+      <div class="cluster-items">Compensation (3.5) + Due Process (5.0)</div>
+      <div class="cluster-impact">상대적 양호. 다만 Control 부재와 결합 시 "공정하지만 의미없는" 보상</div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 2: Demands vs Resources -->
+<div id="demands" class="panel">
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:8px;">Demands > Resources 히트맵</h3>
+  <p style="font-size:13px;color:#94a3b8;margin-bottom:20px;">색이 진할수록 자원 부족이 심각 — 직원 소진 위험 영역</p>
+
+  <div class="dr-grid">
+    <div class="dr-cell dr-danger">
+      <div class="dr-score" style="color:#fca5a5;">2.0</div>
+      Challenging<br>Work
+    </div>
+    <div class="dr-cell dr-danger">
+      <div class="dr-score" style="color:#fca5a5;">2.0</div>
+      Communi-<br>cation
+    </div>
+    <div class="dr-cell dr-danger">
+      <div class="dr-score" style="color:#fca5a5;">2.5</div>
+      Control
+    </div>
+    <div class="dr-cell dr-warn">
+      <div class="dr-score" style="color:#fcd34d;">3.0</div>
+      Collabo-<br>ration
+    </div>
+    <div class="dr-cell dr-warn">
+      <div class="dr-score" style="color:#fcd34d;">3.5</div>
+      Compen-<br>sation
+    </div>
+    <div class="dr-cell dr-warn">
+      <div class="dr-score" style="color:#fcd34d;">4.0</div>
+      Commit-<br>ment
+    </div>
+    <div class="dr-cell dr-warn">
+      <div class="dr-score" style="color:#fcd34d;">4.0</div>
+      Culture
+    </div>
+    <div class="dr-cell dr-ok">
+      <div class="dr-score" style="color:#94a3b8;">4.5</div>
+      Computers/<br>Tech
+    </div>
+    <div class="dr-cell dr-ok">
+      <div class="dr-score" style="color:#94a3b8;">5.0</div>
+      Due<br>Process
+    </div>
+    <div class="dr-cell dr-ok">
+      <div class="dr-score" style="color:#94a3b8;">5.0</div>
+      Compe-<br>tence
+    </div>
+  </div>
+
+  <h3 style="font-size:16px;color:#60a5fa;margin:32px 0 16px;">시그널 키워드</h3>
+  <div class="wordcloud">
+    <div class="word word-neg">결정권 없음</div>
+    <div class="word word-neg">성장 기회 없음</div>
+    <div class="word word-neg">소통 단절</div>
+    <div class="word word-neg">사일로</div>
+    <div class="word word-neg">야근</div>
+    <div class="word word-neg">같은 일 반복</div>
+    <div class="word word-neg">균등 배분</div>
+    <div class="word word-neg">방향 모르겠음</div>
+    <div class="word word-neu">이직 생각</div>
+    <div class="word word-neu">메시지 불일치</div>
+    <div class="word word-neu">관망</div>
+  </div>
+
+  <div class="part-section">
+    <h3 style="font-size:16px;color:#60a5fa;margin-bottom:4px;">직원 참여 수준</h3>
+    <p style="font-size:13px;color:#94a3b8;margin-bottom:12px;">참여 수준↑ → 요구(Demand)가 자원(Resource)으로 전환</p>
+    <div class="part-steps">
+      <div class="part-step part-done">
+        <strong>1단계</strong><br>정보 공유
+      </div>
+      <div class="part-step part-current">
+        <strong>2단계 ← 현재</strong><br>대안 생성
+      </div>
+      <div class="part-step part-future">
+        <strong>3단계</strong><br>권고안 제시
+      </div>
+      <div class="part-step part-target">
+        <strong>4단계 ← 목표</strong><br>결정 동의
+      </div>
+      <div class="part-step part-future">
+        <strong>5단계</strong><br>결과 책임
+      </div>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin-top:8px;">현재 직원이 의견을 내긴 하지만 실제 의사결정에 반영되지 않음. Control 확대가 참여 수준 상승의 열쇠.</p>
+  </div>
+</div>
+
+<!-- Panel 3: 개선 액션 -->
+<div id="actions" class="panel">
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:20px;">권고 액션 (우선순위순)</h3>
+
+  <div class="actions">
+    <div class="action a1">
+      <div class="action-pri" style="color:#f87171;">1순위 — 즉시</div>
+      <div class="action-title">Communication 개선</div>
+      <div class="action-target">
+        대상 C: Communication (2.0) → 목표: 5.0+<br>
+        연쇄 효과: Commitment, Collaboration 동반 상승
+      </div>
+      <div style="font-size:13px;color:#cbd5e1;margin:10px 0;line-height:1.6;">
+        → CEO AI 전환 비전 전사 타운홀<br>
+        → 월간 AI 파일럿 진행 공유<br>
+        → 부서별 Q&A 세션
+      </div>
+      <div class="action-effect">기대: 소통 점수 2.0→5.0, AI 저항 40% 감소</div>
+    </div>
+    <div class="action a2">
+      <div class="action-pri" style="color:#fbbf24;">2순위 — 1개월 내</div>
+      <div class="action-title">Challenging Work 구조화</div>
+      <div class="action-target">
+        대상 C: Challenging Work (2.0) → 목표: 5.0+<br>
+        연쇄 효과: Competence 향상, 이직률 감소
+      </div>
+      <div style="font-size:13px;color:#cbd5e1;margin:10px 0;line-height:1.6;">
+        → R&D 전기차 프로젝트 20% 참여<br>
+        → 사내 AI 스킬 챌린지<br>
+        → 크로스펑셔널 로테이션 파일럿
+      </div>
+      <div class="action-effect">기대: R&D 이탈 50% 감소, 신역량 확보</div>
+    </div>
+    <div class="action a3">
+      <div class="action-pri" style="color:#60a5fa;">3순위 — 분기 내</div>
+      <div class="action-title">Control 점진 확대</div>
+      <div class="action-target">
+        대상 C: Control (2.5) → 목표: 5.0+<br>
+        연쇄 효과: 참여 수준 2→4단계
+      </div>
+      <div style="font-size:13px;color:#cbd5e1;margin:10px 0;line-height:1.6;">
+        → 팀 단위 업무 방식 자율권 부여<br>
+        → 영업팀 파일럿 → 전사 확대<br>
+        → "목표는 설정, 방법은 팀이 결정"
+      </div>
+      <div class="action-effect">기대: 소진 감소, 업무 만족도 30% 상승</div>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;background:linear-gradient(135deg,rgba(96,165,250,0.08),rgba(96,165,250,0.02));border:1px solid rgba(96,165,250,0.2);border-radius:12px;padding:24px;">
+    <h3 style="color:#60a5fa;margin-bottom:12px;">다음 단계</h3>
+    <div style="display:flex;gap:16px;">
+      <div style="flex:1;background:#1e293b;border-radius:8px;padding:14px;border:1px solid rgba(248,113,113,0.3);">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">change-readiness ← 추천</div>
+        <div style="font-size:12px;color:#94a3b8;">Communication 취약 + AI 도입 저항 → 변화 준비도 진단으로 연결</div>
+      </div>
+      <div style="flex:1;background:#1e293b;border-radius:8px;padding:14px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">org-diagnosis</div>
+        <div style="font-size:12px;color:#94a3b8;">조직 전체 전략 실행력 점검. Shared Mindset, Leadership과 연결.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>Framework: Ulrich, <em>HR Champions</em> (1997), Ch5 Table 5-2 — 10C 자원 진단</span>
+  <span>Powered by HR Champions x Claude Code</span>
+</div>
+
+<script>
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

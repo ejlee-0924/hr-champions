@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>변화 준비도 진단 — A사 전사 AI 도입</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Pretendard', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  .header { padding: 24px 32px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header h1 span { color: #60a5fa; }
+  .header .meta { font-size: 13px; color: #94a3b8; }
+
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #1e293b; padding: 0 32px; }
+  .tab { padding: 12px 20px; font-size: 14px; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: #e2e8f0; }
+  .tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+  .panel { display: none; padding: 32px; }
+  .panel.active { display: block; }
+
+  /* Progress Bars */
+  .factor-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .factor-num { width: 24px; height: 24px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+  .factor-name { width: 170px; font-size: 13px; flex-shrink: 0; }
+  .factor-track { flex: 1; height: 24px; background: #1e293b; border-radius: 6px; position: relative; overflow: hidden; }
+  .factor-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 600; transition: width 1s ease; }
+  .ff-high { background: linear-gradient(90deg, #166534, #22c55e); color: #bbf7d0; }
+  .ff-mid { background: linear-gradient(90deg, #78350f, #d97706); color: #fef3c7; }
+  .ff-low { background: linear-gradient(90deg, #7f1d1d, #dc2626); color: #fecaca; }
+  .factor-score { width: 40px; font-size: 14px; font-weight: 600; text-align: right; flex-shrink: 0; }
+
+  /* Type Badge */
+  .type-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; margin-bottom: 24px; }
+
+  /* Risk Checklist */
+  .risk-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 20px; }
+  .risk-item { padding: 12px; border-radius: 8px; font-size: 12px; line-height: 1.5; }
+  .risk-yes { background: #7f1d1d; border: 1px solid #991b1b; }
+  .risk-no { background: #1e293b; border: 1px solid #334155; opacity: 0.4; }
+
+  /* Multi-perspective Table */
+  .mp-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 24px; }
+  .mp-table th { background: #1e293b; padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #94a3b8; border-bottom: 1px solid #334155; }
+  .mp-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #1e293b; }
+  .mp-table tr:hover td { background: rgba(96,165,250,0.03); }
+  .mp-score { font-weight: 600; font-size: 16px; }
+  .mp-conflict { background: rgba(248,113,113,0.08) !important; }
+  .mp-gap { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+  .gap-high { background: rgba(248,113,113,0.15); color: #f87171; }
+  .gap-mid { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .gap-low { background: rgba(148,163,184,0.1); color: #94a3b8; }
+
+  /* Conflict Cards */
+  .conflicts { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
+  .conflict-card { background: #1e293b; border-radius: 12px; padding: 20px; border-left: 4px solid #f87171; }
+  .conflict-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .conflict-title .gap-badge { font-size: 12px; padding: 2px 8px; border-radius: 4px; background: rgba(248,113,113,0.15); color: #f87171; }
+  .conflict-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .conflict-side { padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+  .conflict-exec { background: rgba(96,165,250,0.05); border: 1px solid rgba(96,165,250,0.15); }
+  .conflict-emp { background: rgba(248,113,113,0.05); border: 1px solid rgba(248,113,113,0.15); }
+  .conflict-insight { font-size: 13px; color: #fbbf24; padding: 10px 14px; background: rgba(251,191,36,0.05); border-radius: 8px; border-left: 3px solid #fbbf24; }
+
+  /* Approach */
+  .approach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
+  .approach-card { background: #1e293b; border-radius: 12px; padding: 20px; border-top: 3px solid #334155; }
+  .approach-card.recommended { border-top-color: #34d399; }
+  .approach-card.rejected { opacity: 0.4; }
+  .approach-name { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .approach-desc { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+  .approach-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; margin-top: 8px; }
+
+  /* Action Timeline */
+  .action-timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px; }
+  .at-card { background: #1e293b; border-radius: 12px; padding: 20px; border-top: 3px solid; }
+  .at-when { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+  .at-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .at-target { font-size: 12px; color: #94a3b8; margin-bottom: 10px; }
+  .at-items { font-size: 12px; color: #cbd5e1; line-height: 1.8; }
+
+  .footer { padding: 24px 32px; border-top: 1px solid #1e293b; font-size: 12px; color: #475569; display: flex; justify-content: space-between; }
+
+  @media (max-width: 768px) {
+    .conflict-compare { grid-template-columns: 1fr; }
+    .approach-grid, .action-timeline { grid-template-columns: 1fr; }
+    .risk-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>변화 준비도 진단 — <span>전사 AI 도입</span></h1>
+  <div class="meta">A사 &nbsp;|&nbsp; Ulrich 변화 성공 7요인 (Ch6) &nbsp;|&nbsp; 2026-03-31 &nbsp;|&nbsp; 3관점 분석</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPanel('factors')">7요인 진단</div>
+  <div class="tab" onclick="showPanel('perspectives')">다중 관점</div>
+  <div class="tab" onclick="showPanel('action')">액션플랜</div>
+</div>
+
+<!-- Panel 1: 7요인 진단 -->
+<div id="factors" class="panel active">
+
+  <div class="type-badge" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);">
+    <span style="color:#60a5fa;">변화 유형:</span>
+    <strong style="color:#60a5fa;">Initiative → Process</strong>
+    <span style="color:#94a3b8;font-size:12px;">(아직 Cultural 단계 아님)</span>
+  </div>
+
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:16px;">7요인 종합 프로파일 (HR 관점 기준)</h3>
+
+  <div style="margin-bottom:32px;">
+    <div class="factor-row">
+      <div class="factor-num">1</div>
+      <div class="factor-name">Leading Change</div>
+      <div class="factor-track"><div class="factor-fill ff-mid" style="width:60%;">60</div></div>
+      <div class="factor-score" style="color:#fbbf24;">60</div>
+    </div>
+    <div class="factor-row">
+      <div class="factor-num">2</div>
+      <div class="factor-name">Creating Shared Need</div>
+      <div class="factor-track"><div class="factor-fill ff-low" style="width:45%;">45</div></div>
+      <div class="factor-score" style="color:#f87171;">45</div>
+    </div>
+    <div class="factor-row">
+      <div class="factor-num">3</div>
+      <div class="factor-name">Shaping a Vision</div>
+      <div class="factor-track"><div class="factor-fill ff-low" style="width:35%;">35</div></div>
+      <div class="factor-score" style="color:#f87171;">35</div>
+    </div>
+    <div class="factor-row">
+      <div class="factor-num">4</div>
+      <div class="factor-name">Mobilizing Commitment</div>
+      <div class="factor-track"><div class="factor-fill ff-low" style="width:30%;">30</div></div>
+      <div class="factor-score" style="color:#f87171;">30</div>
+    </div>
+    <div class="factor-row">
+      <div class="factor-num">5</div>
+      <div class="factor-name">Changing Systems</div>
+      <div class="factor-track"><div class="factor-fill ff-low" style="width:25%;">25</div></div>
+      <div class="factor-score" style="color:#f87171;">25</div>
+    </div>
+    <div class="factor-row">
+      <div class="factor-num">6</div>
+      <div class="factor-name">Monitoring Progress</div>
+      <div class="factor-track"><div class="factor-fill ff-low" style="width:20%;">20</div></div>
+      <div class="factor-score" style="color:#f87171;">20</div>
+    </div>
+    <div class="factor-row">
+      <div class="factor-num">7</div>
+      <div class="factor-name">Making Change Last</div>
+      <div class="factor-track"><div class="factor-fill ff-low" style="width:15%;">15</div></div>
+      <div class="factor-score" style="color:#f87171;">15</div>
+    </div>
+  </div>
+
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:12px;">실패 리스크 체크 (Ulrich 8가지 원인)</h3>
+  <div style="font-size:13px;color:#f87171;margin-bottom:16px;">8가지 중 <strong>6개 해당</strong> — 높은 실패 위험</div>
+
+  <div class="risk-grid">
+    <div class="risk-item risk-yes">✅ <strong>1. 긴급하지 않음</strong><br>직원은 필요성 못 느낌</div>
+    <div class="risk-item risk-yes">✅ <strong>2. 단기적 관점</strong><br>파일럿만, 지속 계획 없음</div>
+    <div class="risk-item risk-no">❌ <strong>3. 정치적 동기</strong></div>
+    <div class="risk-item risk-yes">✅ <strong>4. 경직된 설계</strong><br>IT 주도 하향식</div>
+    <div class="risk-item risk-yes">✅ <strong>5. 드문 측정</strong><br>성공 지표 미합의</div>
+    <div class="risk-item risk-yes">✅ <strong>6. 획일적 접근</strong><br>부서별 니즈 무시</div>
+    <div class="risk-item risk-yes">✅ <strong>7. 헌신 동원 실패</strong><br>중간 관리자 저항</div>
+    <div class="risk-item risk-yes">⚠️ <strong>8. 변화 지속 실패</strong><br>구조적으로 예상</div>
+  </div>
+</div>
+
+<!-- Panel 2: 다중 관점 -->
+<div id="perspectives" class="panel">
+
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:4px;">3관점 비교 테이블</h3>
+  <p style="font-size:12px;color:#94a3b8;margin-bottom:16px;">20점 이상 차이 = 충돌 지점 (빨간 하이라이트)</p>
+
+  <table class="mp-table">
+    <thead>
+      <tr>
+        <th style="width:30%;">성공 요인</th>
+        <th style="width:15%;text-align:center;">경영진</th>
+        <th style="width:15%;text-align:center;">직원</th>
+        <th style="width:15%;text-align:center;">HR</th>
+        <th style="width:25%;text-align:center;">격차</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="mp-conflict">
+        <td>1. Leading Change</td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#34d399;">85</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">40</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#fbbf24;">60</span></td>
+        <td style="text-align:center;"><span class="mp-gap gap-high">45p 충돌</span></td>
+      </tr>
+      <tr class="mp-conflict">
+        <td>2. Creating Shared Need</td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#34d399;">80</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">25</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">45</span></td>
+        <td style="text-align:center;"><span class="mp-gap gap-high">55p 충돌</span></td>
+      </tr>
+      <tr class="mp-conflict">
+        <td>3. Shaping a Vision</td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#fbbf24;">70</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">20</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">35</span></td>
+        <td style="text-align:center;"><span class="mp-gap gap-high">50p 충돌</span></td>
+      </tr>
+      <tr class="mp-conflict">
+        <td>4. Mobilizing Commitment</td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#fbbf24;">60</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">15</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">30</span></td>
+        <td style="text-align:center;"><span class="mp-gap gap-high">45p 충돌</span></td>
+      </tr>
+      <tr>
+        <td>5. Changing Systems</td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#fbbf24;">50</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">30</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">25</span></td>
+        <td style="text-align:center;"><span class="mp-gap gap-mid">25p</span></td>
+      </tr>
+      <tr>
+        <td>6. Monitoring Progress</td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">30</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">10</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">20</span></td>
+        <td style="text-align:center;"><span class="mp-gap gap-low">20p</span></td>
+      </tr>
+      <tr>
+        <td>7. Making Change Last</td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">25</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">10</span></td>
+        <td style="text-align:center;"><span class="mp-score" style="color:#f87171;">15</span></td>
+        <td style="text-align:center;"><span class="mp-gap gap-low">15p</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
+    <div style="background:#1e293b;border-radius:8px;padding:14px;text-align:center;border-top:2px solid #60a5fa;">
+      <div style="font-size:12px;color:#94a3b8;">경영진 종합</div>
+      <div style="font-size:32px;font-weight:700;color:#60a5fa;">57</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:14px;text-align:center;border-top:2px solid #f87171;">
+      <div style="font-size:12px;color:#94a3b8;">직원 종합</div>
+      <div style="font-size:32px;font-weight:700;color:#f87171;">21</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:14px;text-align:center;border-top:2px solid #fbbf24;">
+      <div style="font-size:12px;color:#94a3b8;">HR 종합</div>
+      <div style="font-size:32px;font-weight:700;color:#fbbf24;">33</div>
+    </div>
+  </div>
+
+  <h3 style="font-size:16px;color:#f87171;margin-bottom:16px;">충돌 지점 심층 분석</h3>
+
+  <div class="conflicts">
+    <div class="conflict-card">
+      <div class="conflict-title">Creating Shared Need <span class="gap-badge">55p 차이 — 최대 충돌</span></div>
+      <div class="conflict-compare">
+        <div class="conflict-side conflict-exec">
+          <strong style="color:#60a5fa;">경영진 (80)</strong><br>
+          "AI 안 하면 경쟁에서 뒤처진다. 시장 데이터, 경쟁사 동향으로 필요성 확신."
+        </div>
+        <div class="conflict-side conflict-emp">
+          <strong style="color:#f87171;">직원 (25)</strong><br>
+          "또 새로운 걸 배우라고? 지금도 바쁜데. 왜 필요한지 설명 한 번 못 들음."
+        </div>
+      </div>
+      <div class="conflict-insight">경영진은 "왜"를 알지만 전달하지 않았음. 10C Communication(2.0) 최하위와 정확히 일치하는 패턴.</div>
+    </div>
+
+    <div class="conflict-card">
+      <div class="conflict-title">Shaping a Vision <span class="gap-badge">50p 차이</span></div>
+      <div class="conflict-compare">
+        <div class="conflict-side conflict-exec">
+          <strong style="color:#60a5fa;">경영진 (70)</strong><br>
+          "AI-First 전환으로 스마트팩토리 + 업무 자동화. 중장기 로드맵 있음."
+        </div>
+        <div class="conflict-side conflict-emp">
+          <strong style="color:#f87171;">직원 (20)</strong><br>
+          "AI가 뭘 바꾸는 건지 구체적으로 모름. 내 업무가 어떻게 바뀌는데?"
+        </div>
+      </div>
+      <div class="conflict-insight">비전은 있지만 추상적. "나한테 뭐가 달라지는데?"에 대한 답이 없음. 개인 수준 비전 번역 필요.</div>
+    </div>
+
+    <div class="conflict-card">
+      <div class="conflict-title">Mobilizing Commitment <span class="gap-badge">45p 차이</span></div>
+      <div class="conflict-compare">
+        <div class="conflict-side conflict-exec">
+          <strong style="color:#60a5fa;">경영진 (60)</strong><br>
+          "CEO 직접 선언, 1억 예산 확보. 스폰서십 강력."
+        </div>
+        <div class="conflict-side conflict-emp">
+          <strong style="color:#f87171;">직원 (15)</strong><br>
+          "중간 관리자: '내 일자리 위협'. 노조 반대. 적극 저항 + 무관심."
+        </div>
+      </div>
+      <div class="conflict-insight">Top 의지 ≠ 현장 헌신. 중간 관리자가 "전달자"가 아닌 "저항자". 이 층을 전환해야 변화 전파.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 3: 액션플랜 -->
+<div id="action" class="panel">
+
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:16px;">추천 접근법</h3>
+
+  <div class="approach-grid">
+    <div class="approach-card rejected">
+      <div class="approach-name">Top-Down</div>
+      <div class="approach-desc">경영진 → 하향 전파. 이미 CEO 선언했지만 효과 없음. 하향식 메시지가 중간에서 왜곡.</div>
+      <div class="approach-tag" style="background:rgba(248,113,113,0.1);color:#f87171;">현재 상태 — 효과 없음</div>
+    </div>
+    <div class="approach-card recommended">
+      <div class="approach-name">Side-to-Side ✅</div>
+      <div class="approach-desc">부서 간 경계를 넘는 AI 성공 사례 횡적 확산. IT팀 → 인접 부서로 자연스럽게.</div>
+      <div class="approach-tag" style="background:rgba(52,211,153,0.1);color:#34d399;">추천 — 파일럿 성공 확산</div>
+    </div>
+    <div class="approach-card recommended">
+      <div class="approach-name">Bottom-Up ✅</div>
+      <div class="approach-desc">현장 직원이 "우리 업무에 AI를 어떻게 쓸지" 직접 제안. GE Workout 스타일.</div>
+      <div class="approach-tag" style="background:rgba(52,211,153,0.1);color:#34d399;">추천 — 현장 주도 변화</div>
+    </div>
+  </div>
+
+  <h3 style="font-size:16px;color:#60a5fa;margin:32px 0 16px;">권고 액션 타임라인</h3>
+
+  <div class="action-timeline">
+    <div class="at-card" style="border-color:#f87171;">
+      <div class="at-when" style="color:#f87171;">1순위 — 즉시</div>
+      <div class="at-title">Creating Shared Need 확보</div>
+      <div class="at-target">대상: Shared Need 25→60 (직원 관점)</div>
+      <div class="at-items">
+        → 현업 팀장이 "왜 필요한지" 자기 팀 언어로 설명<br>
+        → 구체적 벤치마크: "B사는 AI로 채용 5일 단축"<br>
+        → 직원 언어: "여러분의 야근이 줄어듭니다"<br>
+        → CEO 언어("경쟁력 강화") ❌
+      </div>
+    </div>
+    <div class="at-card" style="border-color:#fbbf24;">
+      <div class="at-when" style="color:#fbbf24;">2순위 — 2주 내</div>
+      <div class="at-title">Monitoring Progress 설계</div>
+      <div class="at-target">대상: Monitoring 20→60 (전 관점)</div>
+      <div class="at-items">
+        → 성공 지표 합의: 시간 절감, 만족도, 활용 빈도<br>
+        → 월간 대시보드 가시화<br>
+        → "진짜 효과가 있구나" 체감 설계
+      </div>
+    </div>
+    <div class="at-card" style="border-color:#60a5fa;">
+      <div class="at-when" style="color:#60a5fa;">3순위 — 1개월 내</div>
+      <div class="at-title">중간 관리자 전환</div>
+      <div class="at-target">대상: Commitment 15→50 (직원 관점)</div>
+      <div class="at-items">
+        → "위협 대상" → "AI 활용 챔피언"으로 리프레이밍<br>
+        → 관리자 전용 AI 워크샵 (프로세스 개선 실습)<br>
+        → "당신 팀 생산성을 높이는 도구"로 포지셔닝
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;background:linear-gradient(135deg,rgba(251,191,36,0.08),rgba(251,191,36,0.02));border:1px solid rgba(251,191,36,0.2);border-radius:12px;padding:24px;">
+    <h3 style="color:#fbbf24;margin-bottom:8px;">핵심 메시지</h3>
+    <div style="font-size:16px;line-height:1.8;">
+      "직원은 필요성을 못 느끼고 있지만 경영진은 긴급하다고 봅니다.<br>
+      <strong>이 55점 격차가 저항의 진원지</strong>입니다.<br>
+      Top-Down 선언이 아니라, 현장이 체감할 수 있는 성공 사례를 먼저 만들어야 합니다."
+    </div>
+  </div>
+
+  <div style="margin-top:24px;display:flex;gap:16px;">
+    <div style="flex:1;background:#1e293b;border-radius:8px;padding:14px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px;">다음: org-diagnosis</div>
+      <div style="font-size:12px;color:#94a3b8;">변화 후 조직 전체 상태를 6요소로 재진단</div>
+    </div>
+    <div style="flex:1;background:#1e293b;border-radius:8px;padding:14px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px;">연결: employee-pulse</div>
+      <div style="font-size:12px;color:#94a3b8;">Communication 2.0 → 변화 후 재측정으로 효과 검증</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>Framework: Ulrich, <em>HR Champions</em> (1997), Ch6 Table 6-3 변화 성공 7요인</span>
+  <span>Powered by HR Champions x Claude Code</span>
+</div>
+
+<script>
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

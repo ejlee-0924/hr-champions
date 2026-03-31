@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>채용 프로세스 리엔지니어링 — A사</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Pretendard', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  .header { padding: 24px 32px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header h1 span { color: #60a5fa; }
+  .header .meta { font-size: 13px; color: #94a3b8; }
+
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #1e293b; padding: 0 32px; }
+  .tab { padding: 12px 20px; font-size: 14px; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: #e2e8f0; }
+  .tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+  .panel { display: none; padding: 32px; }
+  .panel.active { display: block; }
+
+  /* Flow Diagram */
+  .flow { display: flex; align-items: flex-start; gap: 8px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 32px; }
+  .flow-step { flex: 0 0 150px; text-align: center; position: relative; }
+  .flow-box { border-radius: 10px; padding: 14px 10px; font-size: 12px; line-height: 1.5; min-height: 90px; display: flex; flex-direction: column; justify-content: center; transition: transform 0.2s; cursor: pointer; position: relative; }
+  .flow-box:hover { transform: translateY(-3px); }
+  .flow-time { font-size: 20px; font-weight: 700; margin-top: 6px; }
+  .flow-arrow { flex: 0 0 24px; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 20px; padding-top: 20px; }
+  .flow-asis { background: #1e293b; border: 1px solid #334155; }
+  .flow-shouldbe { background: rgba(96,165,250,0.08); border: 1px solid rgba(96,165,250,0.3); }
+  .flow-auto { position: relative; }
+  .flow-auto::after { content: "AI"; position: absolute; top: -8px; right: -8px; background: #60a5fa; color: #0f172a; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+  .flow-same { background: #1e293b; border: 1px solid #334155; opacity: 0.6; }
+
+  .flow-tooltip { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px; font-size: 11px; width: 180px; z-index: 10; text-align: left; color: #94a3b8; margin-top: 8px; }
+  .flow-box:hover .flow-tooltip { display: block; }
+
+  /* Comparison Bars */
+  .compare-section { margin-bottom: 32px; }
+  .compare-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .compare-label { width: 100px; font-size: 12px; color: #94a3b8; text-align: right; flex-shrink: 0; }
+  .compare-bars { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .compare-bar { height: 18px; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 600; transition: width 1s ease; }
+  .bar-before { background: #334155; color: #94a3b8; }
+  .bar-after { background: rgba(96,165,250,0.3); color: #60a5fa; }
+  .compare-save { width: 80px; font-size: 12px; font-weight: 600; text-align: left; flex-shrink: 0; }
+
+  /* ROI Cards */
+  .roi-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+  .roi-card { background: #1e293b; border-radius: 12px; padding: 24px; text-align: center; }
+  .roi-number { font-size: 48px; font-weight: 700; color: #34d399; }
+  .roi-unit { font-size: 16px; color: #34d399; }
+  .roi-label { font-size: 13px; color: #94a3b8; margin-top: 8px; }
+  .roi-detail { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+  /* Timeline */
+  .timeline { display: flex; gap: 16px; margin-bottom: 32px; }
+  .tl-phase { flex: 1; background: #1e293b; border-radius: 12px; padding: 20px; border-top: 3px solid; position: relative; }
+  .tl-phase.p1 { border-color: #34d399; }
+  .tl-phase.p2 { border-color: #60a5fa; }
+  .tl-phase.p3 { border-color: #a78bfa; }
+  .tl-when { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+  .tl-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  .tl-items { font-size: 12px; color: #94a3b8; line-height: 1.8; }
+
+  /* Delivery Mechanism */
+  .mech-section { background: #1e293b; border-radius: 12px; padding: 24px; }
+  .mech-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+  .mech-item { padding: 14px; border-radius: 8px; border: 1px solid #334155; font-size: 13px; }
+  .mech-item.recommended { border-color: #60a5fa; background: rgba(96,165,250,0.05); }
+  .mech-name { font-weight: 600; margin-bottom: 4px; }
+  .mech-desc { font-size: 11px; color: #94a3b8; }
+  .mech-tag { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(96,165,250,0.15); color: #60a5fa; margin-top: 6px; }
+
+  .footer { padding: 24px 32px; border-top: 1px solid #1e293b; font-size: 12px; color: #475569; display: flex; justify-content: space-between; }
+
+  @media (max-width: 768px) {
+    .roi-cards { grid-template-columns: 1fr; }
+    .timeline { flex-direction: column; }
+    .mech-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>채용 프로세스 리엔지니어링 — <span>A사</span></h1>
+  <div class="meta">Ulrich 6단계 로드맵 (Ch4) &nbsp;|&nbsp; 2026-03-31 &nbsp;|&nbsp; 대상: 경력직 채용</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPanel('asis')">As-Is 분석</div>
+  <div class="tab" onclick="showPanel('shouldbe')">Should-Be 설계</div>
+  <div class="tab" onclick="showPanel('roi')">ROI & 액션</div>
+</div>
+
+<!-- Panel 1: As-Is -->
+<div id="asis" class="panel active">
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:20px;">현재 프로세스 흐름</h3>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-box flow-asis">
+        이력서 접수<br><small style="color:#64748b;">메일 → 수작업 분류</small>
+        <div class="flow-time" style="color:#f87171;">3일</div>
+        <div class="flow-tooltip">HR 사원이 메일함에서 이력서를 하나씩 꺼내 폴더별로 분류. 누락 위험 있음.</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box flow-asis">
+        1차 스크리닝<br><small style="color:#64748b;">1건씩 읽고 판단</small>
+        <div class="flow-time" style="color:#f87171;">5일</div>
+        <div class="flow-tooltip">HR 대리가 100건 이력서를 1건씩 읽고 적격 여부 판단. 가장 큰 병목.</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box flow-asis">
+        면접 조율<br><small style="color:#64748b;">전화+메일 5회</small>
+        <div class="flow-time" style="color:#fbbf24;">3일</div>
+        <div class="flow-tooltip">HR 사원이 지원자+면접관 일정을 전화/메일로 왕복 조율. 평균 5회 왕복.</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box flow-asis" style="opacity:0.6;">
+        면접 진행<br><small style="color:#64748b;">대면 1시간</small>
+        <div class="flow-time" style="color:#94a3b8;">1일</div>
+        <div class="flow-tooltip">현업 팀장이 직접 면접. 사람 판단이 필요한 영역 — 자동화 불필요.</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box flow-asis">
+        합격 통보<br><small style="color:#64748b;">개별 메일</small>
+        <div class="flow-time" style="color:#fbbf24;">1일</div>
+        <div class="flow-tooltip">HR 대리가 합격자 개별 메일 작성. 템플릿 없이 매번 새로 작성.</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box flow-asis">
+        온보딩 서류<br><small style="color:#64748b;">10종 수작업</small>
+        <div class="flow-time" style="color:#fbbf24;">2일</div>
+        <div class="flow-tooltip">근로계약서, 보안서약서 등 10종을 수작업으로 준비. 오타/누락 빈번.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:20px;">비효율 포인트</h3>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px;">
+    <div style="background:#7f1d1d;border-radius:12px;padding:20px;">
+      <div style="font-size:12px;color:#fca5a5;font-weight:600;margin-bottom:6px;">병목 #1</div>
+      <div style="font-size:14px;font-weight:600;">1차 스크리닝 5일</div>
+      <div style="font-size:12px;color:#fca5a5;margin-top:6px;">100건 이력서를 사람이 1건씩 읽음. 전체 프로세스의 33%를 차지.</div>
+    </div>
+    <div style="background:#78350f;border-radius:12px;padding:20px;">
+      <div style="font-size:12px;color:#fcd34d;font-weight:600;margin-bottom:6px;">병목 #2</div>
+      <div style="font-size:14px;font-weight:600;">면접 조율 3일</div>
+      <div style="font-size:12px;color:#fcd34d;margin-top:6px;">전화+메일 왕복 평균 5회. 지원자 응답 대기로 시간 허비.</div>
+    </div>
+    <div style="background:#78350f;border-radius:12px;padding:20px;">
+      <div style="font-size:12px;color:#fcd34d;font-weight:600;margin-bottom:6px;">병목 #3</div>
+      <div style="font-size:14px;font-weight:600;">이력서 접수 3일</div>
+      <div style="font-size:12px;color:#fcd34d;margin-top:6px;">메일 수작업 분류. 누락 위험 + 지원자에게 접수 확인 연락 없음.</div>
+    </div>
+  </div>
+
+  <div class="compare-section">
+    <h3 style="font-size:16px;color:#60a5fa;margin-bottom:20px;">벤치마크 비교</h3>
+    <div class="compare-row">
+      <div class="compare-label">채용 소요일</div>
+      <div class="compare-bars">
+        <div class="compare-bar bar-before" style="width:100%;">A사: 15일</div>
+        <div class="compare-bar" style="width:67%;background:rgba(251,191,36,0.2);color:#fbbf24;">업계 평균: 10일</div>
+        <div class="compare-bar" style="width:40%;background:rgba(52,211,153,0.2);color:#34d399;">Best: 5~7일</div>
+      </div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-label">HR 주당 투입</div>
+      <div class="compare-bars">
+        <div class="compare-bar bar-before" style="width:100%;">A사: 15시간</div>
+        <div class="compare-bar" style="width:53%;background:rgba(251,191,36,0.2);color:#fbbf24;">업계 평균: 8시간</div>
+        <div class="compare-bar" style="width:20%;background:rgba(52,211,153,0.2);color:#34d399;">Best: 3시간</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 2: Should-Be -->
+<div id="shouldbe" class="panel">
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:20px;">개선된 프로세스 흐름</h3>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-box flow-shouldbe flow-auto">
+        채용 폼<br><small style="color:#60a5fa;">자동 분류</small>
+        <div class="flow-time" style="color:#34d399;">즉시</div>
+        <div class="flow-tooltip"><strong>변경:</strong> 메일 → 채용 폼(Google Forms/ATS). 자동 태깅+접수 확인 메일 자동 발송.</div>
+      </div>
+    </div>
+    <div class="flow-arrow" style="color:#60a5fa;">→</div>
+    <div class="flow-step">
+      <div class="flow-box flow-shouldbe flow-auto">
+        AI 스크리닝<br><small style="color:#60a5fa;">적격 점수 산출</small>
+        <div class="flow-time" style="color:#34d399;">1일</div>
+        <div class="flow-tooltip"><strong>변경:</strong> CC로 이력서 배치 분석. 적격 점수+추천 순위 자동 생성. HR은 Top 20만 확인.</div>
+      </div>
+    </div>
+    <div class="flow-arrow" style="color:#60a5fa;">→</div>
+    <div class="flow-step">
+      <div class="flow-box flow-shouldbe flow-auto">
+        캘린더 매칭<br><small style="color:#60a5fa;">자동 조율</small>
+        <div class="flow-time" style="color:#34d399;">즉시</div>
+        <div class="flow-tooltip"><strong>변경:</strong> Calendly/Google Calendar 연동. 지원자가 직접 면접 시간 선택.</div>
+      </div>
+    </div>
+    <div class="flow-arrow" style="color:#60a5fa;">→</div>
+    <div class="flow-step">
+      <div class="flow-box flow-same">
+        면접 진행<br><small style="color:#64748b;">대면 (유지)</small>
+        <div class="flow-time" style="color:#94a3b8;">1일</div>
+        <div class="flow-tooltip">변경 없음. 사람의 판단이 필요한 핵심 영역.</div>
+      </div>
+    </div>
+    <div class="flow-arrow" style="color:#60a5fa;">→</div>
+    <div class="flow-step">
+      <div class="flow-box flow-shouldbe flow-auto">
+        자동 통보<br><small style="color:#60a5fa;">템플릿 발송</small>
+        <div class="flow-time" style="color:#34d399;">즉시</div>
+        <div class="flow-tooltip"><strong>변경:</strong> 합격/불합격 템플릿 자동 발송. 합격자에겐 온보딩 패키지 자동 첨부.</div>
+      </div>
+    </div>
+    <div class="flow-arrow" style="color:#60a5fa;">→</div>
+    <div class="flow-step">
+      <div class="flow-box flow-shouldbe flow-auto">
+        디지털 온보딩<br><small style="color:#60a5fa;">자동 생성</small>
+        <div class="flow-time" style="color:#34d399;">즉시</div>
+        <div class="flow-tooltip"><strong>변경:</strong> CC로 10종 서류 자동 채우기. 서명은 전자서명으로.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:20px;">Before vs After 비교</h3>
+
+  <div class="compare-section">
+    <div class="compare-row">
+      <div class="compare-label">이력서 접수</div>
+      <div class="compare-bars">
+        <div class="compare-bar bar-before" style="width:60%;">As-Is: 3일</div>
+        <div class="compare-bar bar-after" style="width:4%;">즉시</div>
+      </div>
+      <div class="compare-save" style="color:#34d399;">-3일</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-label">1차 스크리닝</div>
+      <div class="compare-bars">
+        <div class="compare-bar bar-before" style="width:100%;">As-Is: 5일</div>
+        <div class="compare-bar bar-after" style="width:20%;">1일</div>
+      </div>
+      <div class="compare-save" style="color:#34d399;">-4일</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-label">면접 조율</div>
+      <div class="compare-bars">
+        <div class="compare-bar bar-before" style="width:60%;">As-Is: 3일</div>
+        <div class="compare-bar bar-after" style="width:4%;">즉시</div>
+      </div>
+      <div class="compare-save" style="color:#34d399;">-3일</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-label">면접 진행</div>
+      <div class="compare-bars">
+        <div class="compare-bar bar-before" style="width:20%;">1일</div>
+        <div class="compare-bar bar-after" style="width:20%;">1일</div>
+      </div>
+      <div class="compare-save" style="color:#94a3b8;">유지</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-label">합격 통보</div>
+      <div class="compare-bars">
+        <div class="compare-bar bar-before" style="width:20%;">As-Is: 1일</div>
+        <div class="compare-bar bar-after" style="width:4%;">즉시</div>
+      </div>
+      <div class="compare-save" style="color:#34d399;">-1일</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-label">온보딩 서류</div>
+      <div class="compare-bars">
+        <div class="compare-bar bar-before" style="width:40%;">As-Is: 2일</div>
+        <div class="compare-bar bar-after" style="width:4%;">즉시</div>
+      </div>
+      <div class="compare-save" style="color:#34d399;">-2일</div>
+    </div>
+  </div>
+
+  <div style="background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(52,211,153,0.02));border:1px solid rgba(52,211,153,0.2);border-radius:12px;padding:24px;text-align:center;">
+    <div style="font-size:14px;color:#94a3b8;">총 소요일</div>
+    <div style="font-size:20px;margin:8px 0;">
+      <span style="color:#f87171;text-decoration:line-through;">15일</span>
+      &nbsp;&nbsp;→&nbsp;&nbsp;
+      <span style="font-size:36px;font-weight:700;color:#34d399;">3일</span>
+      <span style="color:#94a3b8;"> (면접 포함 5일)</span>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 3: ROI & 액션 -->
+<div id="roi" class="panel">
+  <div class="roi-cards">
+    <div class="roi-card">
+      <div class="roi-number">67<span class="roi-unit">%</span></div>
+      <div class="roi-label">채용 소요일 단축</div>
+      <div class="roi-detail">15일 → 5일</div>
+    </div>
+    <div class="roi-card">
+      <div class="roi-number">11<span class="roi-unit">h/주</span></div>
+      <div class="roi-label">HR 시간 절감</div>
+      <div class="roi-detail">15시간 → 4시간 (주당)</div>
+    </div>
+    <div class="roi-card">
+      <div class="roi-number">1<span class="roi-unit">명분</span></div>
+      <div class="roi-label">연간 HR 리소스 확보</div>
+      <div class="roi-detail">절감 시간 = HR 사원 1명 전환 가능</div>
+    </div>
+  </div>
+
+  <h3 style="font-size:16px;color:#60a5fa;margin-bottom:20px;">구현 타임라인</h3>
+
+  <div class="timeline">
+    <div class="tl-phase p1">
+      <div class="tl-when" style="color:#34d399;">Phase 1: 즉시 (1~2주)</div>
+      <div class="tl-title">AI 스크리닝 + 메일 자동화</div>
+      <div class="tl-items">
+        → CC로 이력서 배치 분석 Skill 생성<br>
+        → 합격/불합격 메일 템플릿 세팅<br>
+        → R&D센터 채용 3건으로 파일럿
+      </div>
+    </div>
+    <div class="tl-phase p2">
+      <div class="tl-when" style="color:#60a5fa;">Phase 2: 1개월 내</div>
+      <div class="tl-title">캘린더 연동 + 온보딩 패키지</div>
+      <div class="tl-items">
+        → Calendly 또는 Google Calendar 연동<br>
+        → 온보딩 10종 서류 디지털 템플릿<br>
+        → 전자서명 도입
+      </div>
+    </div>
+    <div class="tl-phase p3">
+      <div class="tl-when" style="color:#a78bfa;">Phase 3: 3개월 내</div>
+      <div class="tl-title">전사 확대 + 측정</div>
+      <div class="tl-items">
+        → 전 직군 채용에 확대 적용<br>
+        → 채용 KPI 대시보드 구축<br>
+        → 분기별 임팩트 리뷰
+      </div>
+    </div>
+  </div>
+
+  <div class="mech-section">
+    <h3 style="font-size:16px;color:#60a5fa;">추천 전달 메커니즘</h3>
+    <div style="font-size:13px;color:#94a3b8;margin-top:4px;margin-bottom:16px;">Ulrich의 6가지 HR 전달 메커니즘 중 A사 채용에 적합한 모델</div>
+    <div class="mech-grid">
+      <div class="mech-item recommended">
+        <div class="mech-name">Service Center</div>
+        <div class="mech-desc">표준화된 채용 프로세스를 중앙에서 운영. AI 스크리닝+자동 조율을 한 곳에서.</div>
+        <div class="mech-tag">추천</div>
+      </div>
+      <div class="mech-item recommended">
+        <div class="mech-name">Center of Expertise</div>
+        <div class="mech-desc">R&D, 영업 등 직군별 전문 스크리닝 기준을 CoE가 관리.</div>
+        <div class="mech-tag">추천</div>
+      </div>
+      <div class="mech-item">
+        <div class="mech-name">Integrated Solutions</div>
+        <div class="mech-desc">채용-온보딩-초기교육을 통합 경험으로 설계. 장기 목표.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>Framework: Ulrich, <em>HR Champions</em> (1997), Ch4 Table 4-2 리엔지니어링 6단계</span>
+  <span>Powered by HR Champions x Claude Code</span>
+</div>
+
+<script>
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
