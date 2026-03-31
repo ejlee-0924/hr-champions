@@ -1,43 +1,62 @@
-# HR Champions x Claude Code
+# HR Champions — HR 실무 AI 도구 모음
 
-Dave Ulrich의 **Human Resource Champions** 프레임워크를 Claude Code로 실행하는 HR 실무 도구 스킬.
+Dave Ulrich의 **Human Resource Champions**(1997) 프레임워크를 Claude Code로 실행하는 5개 실무 도구.
 
 책을 몰라도 됩니다. 각 도구가 프레임워크를 내장하고 있어서, 업무 상황에 맞는 키워드만 입력하면 바로 실행됩니다.
 
-## Quick Start
-
-```bash
-npx skills add ejlee-0924/cc-tutor-hr-champions
-```
-
-Claude Code에서 아래처럼 사용하세요:
-
-```
-조직 진단해줘
-프로세스 개선해줘
-직원 분석해줘
-변화관리 점검해줘
-```
-
 ## 도구 목록
 
-| 도구 | 하는 일 | Ulrich 원전 | CC 개념 |
-|------|---------|------------|---------|
-| **HR 역할 진단** | 40문항으로 4역할 강약점 진단 | Ch2 Role-Assessment | 프롬프팅 기초 |
-| **조직 진단** | 조직 아키텍처 6요소 분석 | Ch3 Strategic Partner | CLAUDE.md |
-| **프로세스 개선** | HR 프로세스 리엔지니어링 | Ch4 Admin Expert | Skill |
-| **직원 분석** | 10C 자원 진단으로 직원 니즈 파악 | Ch5 Employee Champion | MCP |
-| **변화관리** | 변화 성공 7요인 다중 관점 분석 | Ch6 Change Agent | Subagent/Team |
+### Skills (5개) — 설치 필요
 
-## 2가지 모드
+| # | 파일 | 하는 일 | 소환 키워드 |
+|---|------|---------|-----------|
+| 1 | **hr-role-checkup.skill** | 40문항으로 HR 4역할 강약점 진단 | "HR 역할 진단", "40문항" |
+| 2 | **org-diagnosis.skill** | 조직 아키텍처 6요소 전략 실행력 진단 | "조직 진단", "조직 분석" |
+| 3 | **process-reengineering.skill** | HR 프로세스 리엔지니어링 6단계 분석 | "프로세스 개선", "리엔지니어링" |
+| 4 | **employee-pulse.skill** | 10C 자원 모델로 직원 니즈 진단 | "직원 분석", "몰입 진단" |
+| 5 | **change-readiness.skill** | 변화 성공 7요인 다중 관점 진단 | "변화관리", "변화 준비도" |
 
-### 실무 모드 (기본)
+### 문서 (2개)
 
-개별 도구를 독립적으로 사용합니다. "조직 진단해줘"처럼 업무 상황에 맞게 호출하세요.
+- **QUICK_START.md** — 5분 시작 가이드 (먼저 읽으세요!)
+- **README.md** — 전체 설명
 
-### 워크샵 모드
+## 빠른 시작 (3단계)
 
-"워크샵 시작"을 입력하면 가상 기업 케이스 시연 → 본인 회사 적용 순서로 4개 도구를 순차 진행합니다. HR Champions x Claude Code 워크샵 퍼실리테이션에 사용하세요.
+### 1. 설치 (2분)
+
+Claude Code Settings → Skills → 5개 .skill 파일 업로드
+
+**최소 설치:** 2개만 (`hr-role-checkup` + 관심 도구 1개)
+
+### 2. 테스트 (1분)
+
+```
+내 HR 역할 진단해줘
+```
+
+### 3. 실전 활용
+
+```
+"우리 조직 진단해줘"
+"채용 프로세스 개선 분석해줘"
+"직원 몰입 분석해줘"
+"AI 도입 변화관리 점검해줘"
+```
+
+## 도구 연결 흐름
+
+```
+hr-role-checkup (나의 4역할 진단)
+    │
+    ├── Strategic Partner 약함 → org-diagnosis
+    ├── Admin Expert 약함 → process-reengineering
+    ├── Employee Champion 약함 → employee-pulse
+    └── Change Agent 약함 → change-readiness
+                                    │
+                                    ↓
+                        (각 도구가 다음 도구를 자연스럽게 추천)
+```
 
 ## 학술적 근거
 
@@ -47,12 +66,10 @@ Claude Code에서 아래처럼 사용하세요:
 
 ## 관련 프로젝트
 
-| 대상 | 저장소 |
-|------|--------|
-| 기업교육 컨설턴트 | [cc-tutor-b2b](https://github.com/ejlee-0924/cc-tutor-b2b) |
-| HR 채용 담당자 | [cc-tutor-hr](https://github.com/ejlee-0924/cc-tutor-hr) |
-| B2B 마케터 | [cc-tutor-marketing](https://github.com/ejlee-0924/cc-tutor-marketing) |
-| **HR/HRD 실무자** | 이 저장소 |
+| 대상 | 저장소 | 성격 |
+|------|--------|------|
+| **HR/HRD 실무 도구** | 이 저장소 | .skill 파일 모음 — 현업에서 바로 사용 |
+| HR Champions로 CC 학습 | [cc-tutor-hr-champions](https://github.com/ejlee-0924/cc-tutor-hr-champions) | 학습 과정 — 워크샵/셀프 학습용 |
 
 ## 라이선스
 

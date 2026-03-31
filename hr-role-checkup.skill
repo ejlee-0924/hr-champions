@@ -1,0 +1,111 @@
+---
+name: hr-role-checkup
+description: Ulrich 40문항으로 HR 4역할(Strategic Partner, Admin Expert, Employee Champion, Change Agent) 강약점을 진단합니다. "HR 역할 진단", "40문항", "내 역할 점검" 요청에 사용.
+---
+
+# HR 역할 진단
+
+Dave Ulrich의 40문항 HR Role-Assessment Survey로 나의 HR 4역할 강약점을 진단한다.
+
+## 프레임워크
+
+**출처:** Ulrich, *Human Resource Champions* (1997), Ch2 부록
+
+- 구조: 10개 카테고리 x 4문항 = 40문항, 1~5점 척도
+- 4역할: Strategic Partner / Administrative Expert / Employee Champion / Change Agent
+
+### 채점 키
+
+| 역할 | 해당 문항 |
+|------|----------|
+| Strategic Partner | Q1, 5, 9, 13, 17, 21, 25, 29, 33, 37 |
+| Admin Expert | Q2, 6, 10, 14, 18, 22, 26, 30, 34, 38 |
+| Employee Champion | Q3, 7, 11, 15, 19, 23, 27, 31, 35, 39 |
+| Change Agent | Q4, 8, 12, 16, 20, 24, 28, 32, 36, 40 |
+
+### 해석 기준
+
+- 역할별 만점: 50점 (10문항 x 5점)
+- 총점 160+ → HR 기능 품질 높음
+- 총점 90 미만 → HR 기능 품질 낮음
+
+### 4역할 매트릭스
+
+```
+              전략 (미래)
+                │
+  Strategic     │     Change
+  Partner       │     Agent
+                │
+ 프로세스 ──────┼────── 사람
+                │
+  Admin         │     Employee
+  Expert        │     Champion
+                │
+              운영 (일상)
+```
+
+## 실행 방법
+
+### 1. 입력 수집
+
+**방식 A — 역할별 합산 점수:**
+
+```
+4역할별 점수를 알려주세요 (각 10~50점):
+- Strategic Partner: ?
+- Administrative Expert: ?
+- Employee Champion: ?
+- Change Agent: ?
+```
+
+**방식 B — 40문항 개별 응답:** 전체 응답을 받아 채점 키로 합산.
+
+### 2. 분석 항목
+
+1. **4역할 점수 비교** — 강점 역할 / 개발 필요 역할 식별
+2. **균형 분석** — 전략-운영 축, 프로세스-사람 축 편향 진단
+3. **역설 분석** — Strategic Partner vs Employee Champion, Change Agent vs Admin Expert 긴장 관계
+4. **개발 우선순위** — 가장 낮은 역할 강화 방향
+5. **다음 도구 추천** — 약한 역할에 해당하는 실무 도구 안내
+
+### 3. 리포트 출력
+
+```markdown
+# 나의 HR Champions 역할 진단
+
+**날짜:** [YYYY-MM-DD]
+**프레임워크:** Ulrich 40문항 HR Role-Assessment (Ch2)
+
+## 점수 요약
+
+| 역할 | 점수 | 수준 |
+|------|------|------|
+| Strategic Partner | /50 | |
+| Admin Expert | /50 | |
+| Employee Champion | /50 | |
+| Change Agent | /50 | |
+| **총점** | **/200** | |
+
+## 강점 역할
+[분석]
+
+## 개발 필요 역할
+[분석 + 강화 방향]
+
+## 균형 분석
+- 전략 vs 운영: [편향 진단]
+- 프로세스 vs 사람: [편향 진단]
+
+## 추천 다음 단계
+[약한 역할에 해당하는 도구 안내]
+```
+
+## 연결 도구
+
+| 약한 역할 | 추천 도구 |
+|----------|----------|
+| Strategic Partner | `org-diagnosis` — 조직 아키텍처 6요소 진단 |
+| Admin Expert | `process-reengineering` — HR 프로세스 리엔지니어링 |
+| Employee Champion | `employee-pulse` — 10C 직원 자원 진단 |
+| Change Agent | `change-readiness` — 변화 성공 7요인 진단 |
