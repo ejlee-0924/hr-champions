@@ -12,9 +12,10 @@ Dave Ulrich의 **Human Resource Champions**(1997) 프레임워크를 Claude Code
 |---|------|---------|-----------|
 | 1 | **hr-role-checkup.skill** | 40문항으로 HR 4역할 강약점 진단 | "HR 역할 진단", "40문항" |
 | 2 | **org-diagnosis.skill** | 조직 아키텍처 6요소 전략 실행력 진단 | "조직 진단", "조직 분석" |
-| 3 | **process-reengineering.skill** | HR 프로세스 리엔지니어링 6단계 분석 | "프로세스 개선", "리엔지니어링" |
-| 4 | **employee-pulse.skill** | 10C 자원 모델로 직원 니즈 진단 | "직원 분석", "몰입 진단" |
-| 5 | **change-readiness.skill** | 변화 성공 7요인 다중 관점 진단 | "변화관리", "변화 준비도" |
+| 3 | **process-reengineering.skill** | HR 프로세스 리엔지니어링 6단계 + 자동화 실행 | "프로세스 개선", "리엔지니어링" |
+| 4 | **employee-pulse.skill** | 10C 자원 모델로 직원 니즈 진단 (AI 시대 업데이트) | "직원 분석", "몰입 진단" |
+| 5 | **change-readiness.skill** | 변화 성공 7요인 + AI 도입 특화 렌즈 | "변화관리", "변화 준비도" |
+| 6 | **hr-for-hr.skill** | HR팀 자체 진단 — AI 시대 준비도 | "HR 자가진단", "HR for HR" |
 
 ### 문서 (2개)
 
@@ -28,6 +29,8 @@ Dave Ulrich의 **Human Resource Champions**(1997) 프레임워크를 Claude Code
 Claude Code Settings → Skills → 5개 .skill 파일 업로드
 
 **최소 설치:** 2개만 (`hr-role-checkup` + 관심 도구 1개)
+
+> **AI 시대에 이 책이 더 필요한 이유:** Ulrich는 1997년에 "HR은 활동(Doable)이 아니라 산출물(Deliverable)로 측정받아야 한다"고 했습니다. 27년간 많은 HR이 이걸 알면서도 실행 못 한 이유는 도구가 없었기 때문입니다. AI가 그 도구를 줬습니다.
 
 ### 2. 테스트 (1분)
 
