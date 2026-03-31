@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>조직 아키텍처 진단 — A사</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Pretendard', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* Header */
+  .header { padding: 24px 32px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header h1 span { color: #60a5fa; }
+  .header .meta { font-size: 13px; color: #94a3b8; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #1e293b; padding: 0 32px; }
+  .tab { padding: 12px 20px; font-size: 14px; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: #e2e8f0; }
+  .tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+  /* Panels */
+  .panel { display: none; padding: 32px; }
+  .panel.active { display: block; }
+
+  /* Cards */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+  .card { background: #1e293b; border-radius: 12px; padding: 20px; position: relative; overflow: hidden; transition: transform 0.2s; }
+  .card:hover { transform: translateY(-2px); }
+  .card .label { font-size: 12px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card .score { font-size: 36px; font-weight: 700; }
+  .card .max { font-size: 14px; color: #64748b; }
+  .card .bar { height: 4px; background: #334155; border-radius: 2px; margin-top: 12px; }
+  .card .bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+  .card .tooltip { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.95); padding: 16px; font-size: 13px; line-height: 1.6; color: #cbd5e1; border-radius: 12px; }
+  .card:hover .tooltip { display: flex; align-items: center; }
+
+  .score-high { color: #34d399; }
+  .score-mid { color: #fbbf24; }
+  .score-low { color: #f87171; }
+  .bar-high { background: #34d399; }
+  .bar-mid { background: #fbbf24; }
+  .bar-low { background: #f87171; }
+
+  /* Radar Chart */
+  .radar-section { display: flex; gap: 32px; align-items: flex-start; }
+  .radar-container { flex: 1; display: flex; justify-content: center; }
+  .radar-legend { flex: 1; }
+  .radar-legend h3 { font-size: 16px; margin-bottom: 16px; color: #60a5fa; }
+  .legend-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #1e293b; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-text { font-size: 13px; }
+  .legend-score { font-weight: 600; margin-left: auto; }
+
+  /* Priority Matrix */
+  .matrix-container { display: flex; gap: 32px; }
+  .matrix { flex: 2; position: relative; background: #1e293b; border-radius: 12px; height: 400px; padding: 40px; }
+  .matrix-label-y { position: absolute; left: -8px; top: 50%; transform: rotate(-90deg) translateX(-50%); font-size: 12px; color: #64748b; transform-origin: left center; }
+  .matrix-label-x { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #64748b; }
+  .matrix-quadrant { position: absolute; font-size: 11px; color: #475569; }
+  .matrix-line-h, .matrix-line-v { position: absolute; background: #334155; }
+  .matrix-line-h { height: 1px; width: calc(100% - 80px); left: 40px; top: 50%; }
+  .matrix-line-v { width: 1px; height: calc(100% - 80px); top: 40px; left: 50%; }
+  .matrix-dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%); cursor: pointer; transition: all 0.2s; z-index: 2; }
+  .matrix-dot:hover { transform: translate(-50%, -50%) scale(1.5); }
+  .matrix-dot .dot-tooltip { display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; font-size: 12px; white-space: nowrap; z-index: 10; }
+  .matrix-dot:hover .dot-tooltip { display: block; }
+
+  .matrix-actions { flex: 1; }
+  .action-card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 12px; border-left: 3px solid; }
+  .action-card.p1 { border-color: #f87171; }
+  .action-card.p2 { border-color: #fbbf24; }
+  .action-card.p3 { border-color: #60a5fa; }
+  .action-num { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+  .action-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .action-desc { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+
+  /* Chain Effect */
+  .chain { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 24px; padding: 20px; background: #1e293b; border-radius: 12px; }
+  .chain-node { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; }
+  .chain-arrow { color: #f87171; font-size: 18px; }
+  .chain-node.weak { background: #7f1d1d; color: #fca5a5; }
+  .chain-node.affected { background: #78350f; color: #fcd34d; }
+
+  /* Summary */
+  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+  .summary-box { background: #1e293b; border-radius: 12px; padding: 20px; }
+  .summary-box h3 { font-size: 14px; color: #60a5fa; margin-bottom: 12px; }
+  .summary-box ul { list-style: none; }
+  .summary-box li { padding: 6px 0; font-size: 13px; color: #cbd5e1; }
+  .summary-box li::before { content: "→ "; color: #60a5fa; }
+
+  /* Footer */
+  .footer { padding: 24px 32px; border-top: 1px solid #1e293b; font-size: 12px; color: #475569; display: flex; justify-content: space-between; }
+
+  @media (max-width: 768px) {
+    .cards { grid-template-columns: 1fr; }
+    .radar-section, .matrix-container { flex-direction: column; }
+    .summary { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>조직 아키텍처 진단 — <span>A사</span></h1>
+  <div class="meta">
+    프레임워크: Ulrich 6요소 (Ch3) &nbsp;|&nbsp; 2026-03-31 &nbsp;|&nbsp; Powered by HR Champions x Claude Code
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPanel('overview')">6요소 진단</div>
+  <div class="tab" onclick="showPanel('matrix')">우선순위 매트릭스</div>
+  <div class="tab" onclick="showPanel('action')">액션플랜</div>
+</div>
+
+<!-- Panel 1: 6요소 진단 -->
+<div id="overview" class="panel active">
+  <div class="cards">
+    <div class="card">
+      <div class="label">Shared Mindset</div>
+      <div class="score score-low">4 <span class="max">/ 10</span></div>
+      <div class="bar"><div class="bar-fill bar-low" style="width:40%"></div></div>
+      <div class="tooltip">공유 문화/정체성 부재. 사일로 심화로 "우리 회사가 뭘 추구하지?" 공감대가 약함. 부서마다 다른 방향.</div>
+    </div>
+    <div class="card">
+      <div class="label">Competence</div>
+      <div class="score score-mid">6 <span class="max">/ 10</span></div>
+      <div class="bar"><div class="bar-fill bar-mid" style="width:60%"></div></div>
+      <div class="tooltip">기존 제조 역량은 강하나, 전기차·AI 등 신규 전략 역량이 부족. R&D 핵심 인재 이탈로 갭 확대 중.</div>
+    </div>
+    <div class="card">
+      <div class="label">Consequence</div>
+      <div class="score score-mid">5 <span class="max">/ 10</span></div>
+      <div class="bar"><div class="bar-fill bar-mid" style="width:50%"></div></div>
+      <div class="tooltip">개인 KPI 위주 성과 평가. 협업 보상 체계 없음. 성과를 내도 본부별 균등 배분이라 동기 저하.</div>
+    </div>
+    <div class="card">
+      <div class="label">Governance</div>
+      <div class="score score-mid">5 <span class="max">/ 10</span></div>
+      <div class="bar"><div class="bar-fill bar-mid" style="width:50%"></div></div>
+      <div class="tooltip">본부별 독립 운영으로 의사결정 속도 느림. 크로스펑셔널 이슈 해결 구조 부재.</div>
+    </div>
+    <div class="card">
+      <div class="label">Work Process / Change</div>
+      <div class="score score-low">3 <span class="max">/ 10</span></div>
+      <div class="bar"><div class="bar-fill bar-low" style="width:30%"></div></div>
+      <div class="tooltip">변화 피로감이 극심. 프로세스 개선 시도가 반복 실패하며 "또야?" 분위기. 학습 조직 문화 부재.</div>
+    </div>
+    <div class="card">
+      <div class="label">Leadership</div>
+      <div class="score score-low">4 <span class="max">/ 10</span></div>
+      <div class="bar"><div class="bar-fill bar-low" style="width:40%"></div></div>
+      <div class="tooltip">차세대 리더 후보 3명 중 2명 퇴사. 현 리더층 변화 수용도 낮음. 파이프라인 단절.</div>
+    </div>
+  </div>
+
+  <div class="radar-section">
+    <div class="radar-container">
+      <svg width="300" height="300" viewBox="0 0 300 300">
+        <!-- Grid -->
+        <g transform="translate(150,150)">
+          <polygon points="0,-120 103.9,-60 103.9,60 0,120 -103.9,60 -103.9,-60" fill="none" stroke="#334155" stroke-width="0.5"/>
+          <polygon points="0,-90 77.9,-45 77.9,45 0,90 -77.9,45 -77.9,-45" fill="none" stroke="#334155" stroke-width="0.5"/>
+          <polygon points="0,-60 52,-30 52,30 0,60 -52,30 -52,-30" fill="none" stroke="#334155" stroke-width="0.5"/>
+          <polygon points="0,-30 26,-15 26,15 0,30 -26,15 -26,-15" fill="none" stroke="#334155" stroke-width="0.5"/>
+          <!-- Axes -->
+          <line x1="0" y1="0" x2="0" y2="-120" stroke="#334155" stroke-width="0.5"/>
+          <line x1="0" y1="0" x2="103.9" y2="-60" stroke="#334155" stroke-width="0.5"/>
+          <line x1="0" y1="0" x2="103.9" y2="60" stroke="#334155" stroke-width="0.5"/>
+          <line x1="0" y1="0" x2="0" y2="120" stroke="#334155" stroke-width="0.5"/>
+          <line x1="0" y1="0" x2="-103.9" y2="60" stroke="#334155" stroke-width="0.5"/>
+          <line x1="0" y1="0" x2="-103.9" y2="-60" stroke="#334155" stroke-width="0.5"/>
+          <!-- Data: SM=4, Comp=6, Cons=5, Gov=5, WP=3, Lead=4 (out of 10, scaled to 120) -->
+          <polygon points="0,-48 62.3,-36 52,30 0,60 -31.2,24 -41.6,-24"
+            fill="rgba(96,165,250,0.15)" stroke="#60a5fa" stroke-width="2"/>
+          <circle cx="0" cy="-48" r="4" fill="#60a5fa"/>
+          <circle cx="62.3" cy="-36" r="4" fill="#60a5fa"/>
+          <circle cx="52" cy="30" r="4" fill="#60a5fa"/>
+          <circle cx="0" cy="60" r="4" fill="#60a5fa"/>
+          <circle cx="-31.2" cy="24" r="4" fill="#60a5fa"/>
+          <circle cx="-41.6" cy="-24" r="4" fill="#60a5fa"/>
+          <!-- Labels -->
+          <text x="0" y="-132" text-anchor="middle" fill="#94a3b8" font-size="11">Shared Mindset</text>
+          <text x="118" y="-62" text-anchor="start" fill="#94a3b8" font-size="11">Competence</text>
+          <text x="118" y="68" text-anchor="start" fill="#94a3b8" font-size="11">Consequence</text>
+          <text x="0" y="140" text-anchor="middle" fill="#94a3b8" font-size="11">Governance</text>
+          <text x="-118" y="68" text-anchor="end" fill="#94a3b8" font-size="11">Work Process</text>
+          <text x="-118" y="-62" text-anchor="end" fill="#94a3b8" font-size="11">Leadership</text>
+        </g>
+      </svg>
+    </div>
+    <div class="radar-legend">
+      <h3>요소별 수준</h3>
+      <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div><div class="legend-text">Work Process / Change</div><div class="legend-score score-low">3/10</div></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div><div class="legend-text">Shared Mindset</div><div class="legend-score score-low">4/10</div></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div><div class="legend-text">Leadership</div><div class="legend-score score-low">4/10</div></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div><div class="legend-text">Consequence</div><div class="legend-score score-mid">5/10</div></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div><div class="legend-text">Governance</div><div class="legend-score score-mid">5/10</div></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div><div class="legend-text">Competence</div><div class="legend-score score-mid">6/10</div></div>
+
+      <div class="chain">
+        <span style="font-size:12px;color:#94a3b8;width:100%;margin-bottom:8px;">연쇄 효과 경로</span>
+        <div class="chain-node weak">Leadership ↓</div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node affected">Shared Mindset ↓</div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node affected">Work Process ↓</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 2: 우선순위 매트릭스 -->
+<div id="matrix" class="panel">
+  <div class="matrix-container">
+    <div class="matrix">
+      <div class="matrix-label-y" style="left:12px;">← Impact 낮음 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Impact 높음 →</div>
+      <div class="matrix-label-x">← 구현 어려움 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 구현 쉬움 →</div>
+      <div class="matrix-line-h"></div>
+      <div class="matrix-line-v"></div>
+      <div class="matrix-quadrant" style="top:48px;right:48px;">★ 1순위 (고임팩트·고실행)</div>
+      <div class="matrix-quadrant" style="top:48px;left:48px;">3순위 (고임팩트·저실행)</div>
+      <div class="matrix-quadrant" style="bottom:48px;right:48px;">2순위</div>
+      <div class="matrix-quadrant" style="bottom:48px;left:48px;">4순위</div>
+
+      <!-- Dots: positioned as % from top-left of inner area -->
+      <div class="matrix-dot" style="top:18%;right:25%;background:#f87171;">
+        <div class="dot-tooltip">리더십 파이프라인 구축<br>Impact: 9 | 실행: 7</div>
+      </div>
+      <div class="matrix-dot" style="top:22%;right:35%;background:#f87171;">
+        <div class="dot-tooltip">공유 비전 워크샵 (Shared Mindset)<br>Impact: 8 | 실행: 6</div>
+      </div>
+      <div class="matrix-dot" style="top:15%;left:30%;background:#fbbf24;">
+        <div class="dot-tooltip">조직구조 개편 (Governance)<br>Impact: 9 | 실행: 3</div>
+      </div>
+      <div class="matrix-dot" style="top:35%;right:20%;background:#60a5fa;">
+        <div class="dot-tooltip">협업 인센티브 도입 (Consequence)<br>Impact: 7 | 실행: 8</div>
+      </div>
+      <div class="matrix-dot" style="top:28%;left:25%;background:#fbbf24;">
+        <div class="dot-tooltip">변화관리 역량 교육 (Work Process)<br>Impact: 8 | 실행: 4</div>
+      </div>
+    </div>
+
+    <div class="matrix-actions">
+      <h3 style="font-size:16px;margin-bottom:16px;color:#60a5fa;">이니셔티브 목록</h3>
+      <div class="action-card p1">
+        <div class="action-num" style="color:#f87171;">1순위</div>
+        <div class="action-title">리더십 파이프라인 구축</div>
+        <div class="action-desc">차세대 리더 발굴·육성 프로그램. 6개월 내 후보 5명 선정 + 멘토링 시작.</div>
+      </div>
+      <div class="action-card p1">
+        <div class="action-num" style="color:#f87171;">1순위</div>
+        <div class="action-title">공유 비전 워크샵</div>
+        <div class="action-desc">전사 미션·비전 재정립. 본부장 합숙 → 전사 타운홀로 확산.</div>
+      </div>
+      <div class="action-card p2">
+        <div class="action-num" style="color:#fbbf24;">2순위</div>
+        <div class="action-title">협업 인센티브 도입</div>
+        <div class="action-desc">크로스펑셔널 프로젝트 성과를 팀 보상에 반영. 분기 단위 파일럿.</div>
+      </div>
+      <div class="action-card p3">
+        <div class="action-num" style="color:#60a5fa;">3순위</div>
+        <div class="action-title">변화관리 역량 교육</div>
+        <div class="action-desc">중간 관리자 대상 변화관리 워크샵. 변화 피로 대응 전략 포함.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 3: 액션플랜 -->
+<div id="action" class="panel">
+  <h2 style="font-size:18px;margin-bottom:24px;">24개월 액션 로드맵</h2>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;">
+    <div style="background:#1e293b;border-radius:12px;padding:20px;border-top:3px solid #f87171;">
+      <div style="font-size:12px;color:#f87171;font-weight:600;">Q1-Q2 (즉시)</div>
+      <div style="font-size:14px;font-weight:600;margin:8px 0;">리더십 파이프라인</div>
+      <div style="font-size:12px;color:#94a3b8;">후보 5명 선정<br>멘토링 매칭<br>리더십 역량 진단</div>
+    </div>
+    <div style="background:#1e293b;border-radius:12px;padding:20px;border-top:3px solid #f87171;">
+      <div style="font-size:12px;color:#f87171;font-weight:600;">Q1-Q2 (즉시)</div>
+      <div style="font-size:14px;font-weight:600;margin:8px 0;">공유 비전 워크샵</div>
+      <div style="font-size:12px;color:#94a3b8;">본부장 합숙 워크샵<br>전사 타운홀<br>비전 내재화 KPI</div>
+    </div>
+    <div style="background:#1e293b;border-radius:12px;padding:20px;border-top:3px solid #fbbf24;">
+      <div style="font-size:12px;color:#fbbf24;font-weight:600;">Q3-Q4</div>
+      <div style="font-size:14px;font-weight:600;margin:8px 0;">협업 인센티브</div>
+      <div style="font-size:12px;color:#94a3b8;">크로스펑셔널 KPI 설계<br>파일럿 2개 부서<br>보상 체계 반영</div>
+    </div>
+    <div style="background:#1e293b;border-radius:12px;padding:20px;border-top:3px solid #60a5fa;">
+      <div style="font-size:12px;color:#60a5fa;font-weight:600;">Q5-Q8 (장기)</div>
+      <div style="font-size:14px;font-weight:600;margin:8px 0;">변화관리 역량</div>
+      <div style="font-size:12px;color:#94a3b8;">관리자 워크샵 4회<br>변화 에이전트 양성<br>프로세스 개선 사이클</div>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="summary-box">
+      <h3>강점 (유지·활용)</h3>
+      <ul>
+        <li>Competence 6/10 — 기존 제조 역량은 업계 수준. 이 위에 신규 역량을 쌓는 전략</li>
+        <li>Consequence 5/10 — 성과 평가 체계는 존재. 협업 요소만 추가하면 빠르게 개선 가능</li>
+      </ul>
+    </div>
+    <div class="summary-box">
+      <h3>취약 (집중 개선)</h3>
+      <ul>
+        <li>Work Process 3/10 — 변화 피로 극심. 작은 성공 경험부터 쌓는 접근 필요</li>
+        <li>Shared Mindset 4/10 — "우리는 어디로 가는가?" 공감대 부재가 사일로의 근본 원인</li>
+        <li>Leadership 4/10 — 파이프라인 단절이 모든 요소에 연쇄 영향</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>Framework: Dave Ulrich, <em>Human Resource Champions</em> (1997), Ch3 Table 3-4</span>
+  <span>Generated by HR Champions x Claude Code</span>
+</div>
+
+<script>
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
