@@ -53,9 +53,16 @@ Dave Ulrich의 40문항 HR Role-Assessment Survey로 나의 HR 4역할 강약점
 
 스킬 활성화 시 아래 순서로 출력한다:
 
-**① "AI 시대 Why" 부가 설명** — 스킬 상단의 `> AI 시대 Why:` 블록인용을 먼저 표시
-**② 텍스트 안내** — 필요한 입력 정보 설명
-**③ AskUserQuestion** — 바로 이어서 선택지 UI 제시
+**① 프레임워크 소개** — 이 도구가 무엇인지, Ulrich가 왜 만들었는지 1~2문장
+**② AI 시대 연결** — 이 프레임워크가 AI 시대에 어떻게 더 강력해지는지
+**③ 텍스트 안내** — 필요한 입력 정보 설명
+**④ AskUserQuestion** — 바로 이어서 선택지 UI 제시
+
+**① 프레임워크 소개 예시:**
+> Ulrich의 40문항 진단은 HR이 수행하는 4가지 역할(Strategic Partner, Admin Expert, Employee Champion, Change Agent)의 균형을 측정하는 도구입니다. "4가지를 다 잘하는 HR은 없다. 중요한 건 어디가 강하고 어디가 약한지 아는 것이다."
+
+**② AI 시대 연결 예시:**
+> AI가 Admin Expert의 업무를 자동화하고, Change Agent의 역할을 확대하는 지금 — "나는 어떤 역할이 강하고 약한가?"를 아는 것이 AI 시대 HR 생존의 출발점입니다.
 
 ```
 40문항 진단 결과가 필요합니다.
