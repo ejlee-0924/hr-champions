@@ -103,7 +103,6 @@ hr-role-checkup (나의 4역할 진단)
 | 대상 | 저장소 | 성격 |
 |------|--------|------|
 | **HR/HRD 실무 도구** | 이 저장소 | .skill 파일 모음 — 현업에서 바로 사용 |
-| HR Champions로 CC 학습 | [cc-tutor-hr-champions](https://github.com/ejlee-0924/cc-tutor-hr-champions) | 학습 과정 — 워크샵/셀프 학습용 |
 
 ## 면책 조항 (Disclaimer)
 
