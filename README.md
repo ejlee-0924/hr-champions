@@ -105,6 +105,10 @@ hr-role-checkup (나의 4역할 진단)
 | **HR/HRD 실무 도구** | 이 저장소 | .skill 파일 모음 — 현업에서 바로 사용 |
 | HR Champions로 CC 학습 | [cc-tutor-hr-champions](https://github.com/ejlee-0924/cc-tutor-hr-champions) | 학습 과정 — 워크샵/셀프 학습용 |
 
+## 면책 조항 (Disclaimer)
+
+이 프로젝트는 Dave Ulrich의 *Human Resource Champions: The Next Agenda for Adding Value and Delivering Results* (1997, Harvard Business School Press)에서 소개된 프레임워크에 기반한 독립적 도구입니다. 원저작자 및 Harvard Business School Press와는 무관하며, 공식적으로 승인·보증받은 프로젝트가 아닙니다. 원전의 프레임워크 개념을 참조하여 AI 시대 HR 실무에 적용한 독창적 저작물입니다.
+
 ## 라이선스
 
 MIT
