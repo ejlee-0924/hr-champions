@@ -1,3 +1,60 @@
+# HR Champions — AI-Powered HR Skills for Claude Code
+
+> **[한국어 버전은 아래에 있습니다 ↓](#hr-champions--hr-실무-ai-도구-모음)**
+
+6 practical AI skills for HR professionals, built on Dave Ulrich's **Human Resource Champions** (1997) framework — powered by [Claude Code](https://claude.ai/claude-code).
+
+No prior knowledge of the book required. Each skill embeds the framework, so you just describe your situation and it runs.
+
+## Skills
+
+| # | Skill | What it does |
+|---|-------|-------------|
+| 1 | **hr-role-checkup** | 40-question assessment of your HR role strengths (Strategic Partner, Admin Expert, Employee Champion, Change Agent) |
+| 2 | **org-diagnosis** | Organizational architecture diagnosis across 6 elements |
+| 3 | **process-reengineering** | 6-step HR process reengineering + automation |
+| 4 | **employee-pulse** | Employee needs diagnosis using the 10C resource model |
+| 5 | **change-readiness** | Change readiness assessment (7 success factors + AI adoption lens) |
+| 6 | **hr-for-hr** | HR team self-assessment — AI-era readiness |
+
+## Quick Start
+
+1. **Install:** Claude Code Settings → Skills → Upload `.skill` files
+2. **Try it:** `"Diagnose my HR role strengths"`
+3. **Use it:** `"Analyze our org"`, `"Improve our hiring process"`, `"Check AI adoption readiness"`
+
+## How Skills Connect
+
+```
+hr-role-checkup (your 4-role diagnosis)
+    │
+    ├── Strategic Partner weak → org-diagnosis
+    ├── Admin Expert weak → process-reengineering
+    ├── Employee Champion weak → employee-pulse
+    └── Change Agent weak → change-readiness
+```
+
+## Output Formats
+
+All skills generate markdown reports. You can also request:
+- **HTML Dashboard** — interactive charts + tabs
+- **HTML Slides** — presentation-ready for leadership
+- **HTML 1-pager** — quick summary for decision-making
+
+## Academic Foundation
+
+> Dave Ulrich, *Human Resource Champions: The Next Agenda for Adding Value and Delivering Results* (1997), Harvard Business School Press.
+
+## Disclaimer
+
+This is an independent project inspired by Ulrich's framework. It is not affiliated with or endorsed by the original author or Harvard Business School Press.
+
+## License
+
+MIT
+
+---
+
 # HR Champions — HR 실무 AI 도구 모음
 
 Dave Ulrich의 **Human Resource Champions**(1997) 프레임워크를 Claude Code로 실행하는 6개 실무 도구.
